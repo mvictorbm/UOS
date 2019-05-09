@@ -1,0 +1,175 @@
+// -> Utilize o ID da sua montaria na linha abaixo.
+@setalias 'mount' 0x16b6f1
+if not buffexists "Dismount" and @inrange 'mount' 2
+  if not mounted 'self' and not poisoned 'mount'
+    useobject! 'mount'
+  endif
+endif
+if not listexists 'joias'
+  createlist 'joias'
+  @pushlist! 'joias' 0x1086
+  @pushlist! 'joias' 0x108a
+  @pushlist! 'joias' 0x1f09
+  @pushlist! 'joias' 0x1f06
+endif
+if not timerexists 'evasion'
+  @settimer 'evasion' 22000
+endif
+if not timerexists 'enemyofone'
+  @settimer 'enemyofone' 3000
+endif
+if not timerexists 'nocast'
+  @settimer 'nocast' 3000
+endif
+if not @timerexists 'persuit'
+  @createtimer 'persuit'
+endif
+//Deslogar Morto - Proteger o PET
+if dead 'self'
+  if @inrange 'mount' 5
+    logoutbutton
+  else
+    stop
+  endif
+endif
+sysmsg '# BOT BOSS by Grifo #' 33
+while not dead 'self'
+  //Ignorar Natures Fury e Energy Vortex
+  if @graphic chests[] == 0x33 or @graphic chests[] == 0xa4
+    @unsetalias chests[]
+    @getenemy 'criminal'chests[]'murderer''gray' 'next'
+  endif
+  //Mantenha uma bag of sending na backpack para enviar Gold para o BANK
+  if @findtype 0xe76 'any' 'backpack' 1 0
+    waitforproperties 'found' 1000
+    if @property 'Charges' 'found' <= 5
+      headmsg '# Atenção - Bag of Sending #' 63
+    elseif @property 'Charges' 'found' == 0
+      headmsg '# Bag of Sending charges: 0 #' 63
+    endif
+    if weight 'self' > 430
+      if usetype! 0xe76
+        waitfortarget 1000
+        targettype! 0xeed
+        pause 500
+      endif
+    endif
+  endif
+  //-----------------------
+  if not @buffexists 'honored' and @findobject chests[]
+    if @inrange chests[] 8 and @hits chests[] == @maxhits chests[]
+      virtue 'Honor'
+      waitfortarget 1500
+      @target! chests[]
+      @attack! chests[]
+    endif
+  endif
+  // -> SPELLS
+  if not @inrange chests[] 6 and mana 'self' >= 7
+    if diffhits 'self' >= 25 or poisoned 'self'
+      @chivalryheal! 'self'
+      while waitingfortarget
+      endwhile
+    endif
+  endif
+  if timer 'nocast' > 3000
+    // -> BUSHIDO
+    if not @buffexists 'confidence' and hits < 100
+      cast 'confidence'
+      pause 250
+      @settimer 'nocast' 0
+    endif
+    if not @buffexists 'evasion'
+      if @timer 'evasion' > 22000
+        cast 'evasion'
+        pause 250
+        @settimer 'evasion' 0
+      elseif not buffexists 'Counter Attack' and mana >= 10
+        cast 'Counter Attack'
+        pause 500
+      endif
+    endif
+    if hits <= 50 and mana >= 20
+      cast 'confidence'
+      pause 250
+      @settimer 'nocast' 0
+    endif
+  endif
+  // -> CHIVALRY
+  if skill 'chivalry' >= 60
+    if not buffexists 'Consecrate Weapon' and mana 'self' >= 15
+      @cast 'consecrate weapon'
+      pause 1000
+    endif
+    if timer 'enemyofone' > 1500
+      if not enemy chests[] and mana 'self' >= 13
+        cast 'Enemy of One'
+        pause 1000
+        @settimer 'enemyofone' 0
+      endif
+    endif
+    if stam < 80 and mana 'self' >= 15
+      @cast "Divine Fury"
+      pause 1000
+    endif
+  endif
+  for 0 to 'joias'
+    while @findtype 'joias[]' 'any' 'backpack'
+      waitforproperties 'found' 1500
+      if not @property 'insured' 'found' and not @property 'blessed' 'found'
+        waitforcontext 'self' 3 1500
+        waitfortarget 1500
+        if @target! 'found'
+          waitforproperties 'found' 1500
+        endif
+      endif
+      @ignoreobject 'found'
+      waitforjournal 'insured the item' 'system' 1000
+      @canceltarget
+    endwhile
+  endfor
+  // -> ATTACK
+  if @inrange chests[] 1
+    if not @buffexists 'Rose Of Trinsic Petals' and @findtype 0x1021 14 'backpack'
+      usetype! 0x1021 14
+      pause 1000
+    endif
+    settimer 'persuit' 0
+    @attack!  chests[]
+    if not buffexists 'lightning strike' and mana >= 8
+      cast 'lightning strike'
+      pause 800
+    endif
+  elseif @inrange chests[] 15
+    @getenemy 'criminal' 'murderer' chests[] 'gray' 'closest'
+    settimer 'persuit' 0
+    if @timer 'persuit' > 2500
+      break
+    endif
+    if dead
+      //Deslogar Morto - Proteger o PET
+      if dead 'self' and @inrange 'mount' 5
+        logoutbutton
+      endif
+    elseif @x chests[] > x 'self' and @y chests[] > y 'self'
+      run 'southeast'
+    elseif @x chests[] < x 'self' and @y chests[] > y 'self'
+      run 'southwest'
+    elseif @x chests[] > x 'self' and @y chests[] < y 'self'
+      run 'northeast'
+    elseif @x chests[] < x 'self' and @y chests[] < y 'self'
+      run 'northwest'
+    elseif @x chests[] > x 'self' and @y chests[] == y 'self'
+      run 'east'
+    elseif @x chests[] < x 'self' and @y chests[] == y 'self'
+      run 'west'
+    elseif @x chests[] == x 'self' and @y chests[] > y 'self'
+      run 'south'
+    elseif @x chests[] == x 'self' and @y chests[] < y 'self'
+      run 'north'
+    endif
+  elseif not @findobject chests[]
+    @getenemy 'criminal' chests[] 'gray' 'murderer' 'closest'
+    @attack! chests[]
+  endif
+endwhile
