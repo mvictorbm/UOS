@@ -1,0 +1,715 @@
+//Doom puzzle: solver
+//Version: 5.4 working (no journal reading)
+//Wear a shield on the thief if you want to repeat the previous tried sequence
+//Author: Llama Vortex
+//Set: Loop ON
+//Uncheck: Options - Friends - Consider only this as valid friends or add everyone involved to friendlist
+//Set: Do not auto-interrupt
+//Date: 16/11/2017
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+//Setting aliases if status_aliasOk is not present
+@unsetalias 'thief'
+@unsetalias 'northplayer'
+@unsetalias 'eastplayer'
+@unsetalias 'southplayer'
+@unsetalias 'westplayer'
+@unsetalias 'lever'
+@unsetalias 'status_aliasOk'
+@unsetalias 'status_leverOk'
+@unsetalias 'status_listsOk'
+@unsetalias 'status_sequencesOk'
+@clearlist 'listeners'
+@clearlist 'lever_type1'
+@clearlist 'lever_type2'
+@clearlist 'direction'
+@clearlist 'direction_trigger'
+@clearlist 'try_number'
+@setalias 'ready' 'self'
+//Checks if the player is in the puzzle region
+while distance 0x4026f6eb <= 15
+  if not findalias 'status_aliasOk'
+    if not listexists 'lever_type1'
+      createlist 'lever_type1'
+    endif
+    if not listexists 'lever_type2'
+      createlist 'lever_type2'
+    endif
+    if not listexists 'listeners'
+      createlist 'listeners'
+    endif
+    if not @listexists 'direction_trigger'
+      createlist 'direction_trigger'
+    endif
+    //Setting my alias
+    while @list 'direction_trigger' < 1 or not @findalias 'thief'
+      if @x 'self' == 324 and @y 'self' == 58
+        @setalias 'northplayer' 'self'
+        headmsg 'North player' 220 'self'
+        @pushlist 'direction_trigger' 0
+        @pushlist 'listeners' 'northplayer'
+      elseif @x 'self' == 324 and @y 'self' == 64
+        @setalias 'thief' 'self'
+        headmsg 'Thief' 220 'self'
+        @pushlist 'direction_trigger' 'thief'
+        @pushlist 'listeners' 'thief'
+		turn 'southeast'
+      elseif @x 'self' == 332 and @y 'self' == 64
+        setalias 'eastplayer' 'self'
+        headmsg 'East player' 220 'self'
+        @pushlist 'direction_trigger' 2
+        @pushlist 'listeners' 'eastplayer'
+      elseif @x 'self' == 323 and @y 'self' == 72
+        @setalias 'southplayer' 'self'
+        headmsg 'South player' 220 'self'
+        @pushlist 'direction_trigger' 4
+        @pushlist 'listeners' 'southplayer'
+      elseif @x 'self' == 316 and @y 'self' == 65
+        @setalias 'westplayer' 'self'
+        headmsg 'West player' 220 'self'
+        @pushlist 'direction_trigger' 6
+        @pushlist 'listeners' 'westplayer'
+      else
+        headmsg 'You are not in a valid position' 220 'self'
+        pause 3000
+      endif
+      getfriend 'friend' 'innocent' 'humanoid'
+      if @x 'friend' == 324 and @y 'friend' == 64
+        @setalias 'thief' 'friend'
+		headmsg 'Thief' 220 'thief'
+      endif
+    endwhile
+    setalias 'status_aliasOk' 'self'
+    pause 2000
+  endif
+  if @inlist 'direction_trigger' 'thief'
+    if not @timerexists 'timedout'
+      createtimer 'timedout'
+    endif
+    while @list 'listeners' < 5
+      headmsg 'Waiting for more listeners' 220 'self'
+      pause 1000
+      getfriend 'friend' 'innocent' 'humanoid'
+      if @x 'friend' == 324 and @y 'friend' == 58
+        @setalias 'northplayer' 'friend'
+        @pushlist! 'listeners' 'northplayer'
+      elseif @x 'friend' == 332 and @y 'friend' == 64
+        @setalias 'eastplayer' 'friend'
+        @pushlist! 'listeners' 'eastplayer'
+      elseif @x 'friend' == 323 and @y 'friend' == 72
+        @setalias 'southplayer' 'friend'
+        @pushlist! 'listeners' 'southplayer'
+      elseif @x 'friend' == 316 and @y 'friend' == 65
+        @setalias 'westplayer' 'friend'
+        @pushlist! 'listeners' 'westplayer'
+      endif
+    endwhile
+    //Check if inquisitors is in range and try to steal
+    if @findtype 0x1414 1266 'ground' 1 15
+      @setalias 'inquisitors' 'found'
+      while not @findtype 0x1414 1266 'backpack'
+        while not @inrange 'inquisitors' 1
+          if dead
+            stop
+          elseif @x 'inquisitors' > x 'self' and @y 'inquisitors' > y 'self'
+            walk 'southeast'
+          elseif @x 'inquisitors' < x 'self' and @y 'inquisitors' > y 'self'
+            walk 'southwest'
+          elseif @x 'inquisitors' > x 'self' and @y 'inquisitors' < y 'self'
+            walk 'northeast'
+          elseif @x 'inquisitors' < x 'self' and @y 'inquisitors' < y 'self'
+            walk 'northwest'
+          elseif @x 'inquisitors' > x 'self' and @y 'inquisitors' == y 'self'
+            walk 'east'
+          elseif @x 'inquisitors' < x 'self' and @y 'inquisitors' == y 'self'
+            walk 'west'
+          elseif @x 'inquisitors' == x 'self' and @y 'inquisitors' > y 'self'
+            walk 'south'
+          elseif @x 'inquisitors' == x 'self' and @y 'inquisitors' < y 'self'
+            walk 'north'
+          endif
+          pause 200
+        endwhile
+        //Try to steal inquisitor
+        if findlayer 'self' 1 or findlayer 'self' 2
+          clearhands 'both'
+          pause 1300
+        else
+          useskill 'stealing'
+          waitfortarget 1000
+          target! 'inquisitors'
+        endif
+      endwhile
+    endif
+    //Check if inquis is insured
+    if @findtype 0x1414 1266 'backpack'
+      waitforproperties 'inquisitors' 10000
+      while not @property 'insured' 'inquisitors'
+        waitforcontext 'self' 3 1000
+        waitfortarget 1000
+        target! 'inquisitors'
+        canceltarget
+        pause 3000
+      endwhile
+    endif
+    //Creating lists if status_listsOk is not present
+    if not findalias 'status_listsOk'
+      if not listexists "try_number" or list "try_number" == 0
+        createlist "try_number"
+        pushlist 'try_number' "try1"
+        pushlist 'try_number' "try2"
+        pushlist 'try_number' "try3"
+        pushlist 'try_number' "try4"
+      endif
+      if not @listexists "curr_seq"
+        createlist "curr_seq"
+        clearjournal
+      endif
+      ////Every tried sequence so far
+      if not @listexists "tried_seq"
+        createlist "tried_seq"
+      endif
+      ////The last tried sequence
+      if not @listexists "ltried_seq"
+        createlist "ltried_seq"
+      endif
+      ////The current lever that is being tried according to the curr_seq
+      if not @listexists "curr_lever"
+        createlist "curr_lever"
+      endif
+      setalias 'status_listsOk' 'self'
+    endif
+    //Será que é necessário aqui?
+    while @dead 'self'
+      msg 'Ress me please' 220
+      if @gumpexists 2957810225
+        @replygump 2957810225 1
+      endif
+      pause 5000
+      @unsetalias 'ready'
+    endwhile
+    ////Check if everybody still in position
+    if not @x 'northplayer' == 324 or not @y 'northplayer' == 58
+      msg 'North player is not in position' 220
+      pause 2000
+      @unsetalias 'ready'
+    elseif not @x 'eastplayer' == 332 or not @y 'eastplayer' == 64
+      msg 'East player is not in position' 220
+      pause 2000
+      @unsetalias 'ready'
+    elseif not @x 'southplayer' == 323 or not @y 'southplayer' == 72
+      msg 'South player is not in position' 220
+      pause 2000
+      @unsetalias 'ready'
+    elseif not @x 'westplayer' == 316 or not @y 'westplayer' == 65
+      msg 'West player is not in position' 220
+      pause 2000
+      @unsetalias 'ready'
+    elseif not @x 'thief' == 324 or not @y 'thief' == 64
+      msg 'Thief player is not in position' 220
+      pause 2000
+      @unsetalias 'ready'
+    endif
+    //Final check before saying the sequences
+    for 0 to listeners
+      while @hits listeners[] < maxhits listeners[] and not @dead listeners[]
+        bigheal listeners[]
+      endwhile
+      if not @findobject listeners[]
+        poplist 'listeners' listeners[]
+        headmsg 'Could not find the current listener. Removed' 220 'self'
+        unsetalias 'status_aliasOk'
+        pause 1000
+        @unsetalias 'ready'
+      elseif list 'listeners' < 5
+        headmsg 'Not enough listeners!. Macro is restarting' 220 'self'
+        unsetalias 'status_aliasOk'
+        pause 1000
+        @unsetalias 'ready'
+      else
+		setalias 'ready' 'self'
+	  endif
+    endfor
+    //Loading all possible sequences.
+    if not findalias 'status_sequencesOk'
+      //Here are all possible combinations of lever sequences
+      if not listexists "sequence1"
+        createlist "sequence1"
+        pushlist! "sequence1" "north"
+        pushlist! "sequence1" "south"
+        pushlist! "sequence1" "east"
+        pushlist! "sequence1" "west"
+      endif
+      if not listexists "sequence2"
+        createlist "sequence2"
+        pushlist! "sequence2" "north"
+        pushlist! "sequence2" "south"
+        pushlist! "sequence2" "west"
+        pushlist! "sequence2" "east"
+      endif
+      if not listexists "sequence3"
+        createlist "sequence3"
+        pushlist! "sequence3" "north"
+        pushlist! "sequence3" "east"
+        pushlist! "sequence3" "south"
+        pushlist! "sequence3" "west"
+      endif
+      if not listexists "sequence4"
+        createlist "sequence4"
+        pushlist! "sequence4" "north"
+        pushlist! "sequence4" "east"
+        pushlist! "sequence4" "west"
+        pushlist! "sequence4" "south"
+      endif
+      if not listexists "sequence5"
+        createlist "sequence5"
+        pushlist! "sequence5" "north"
+        pushlist! "sequence5" "west"
+        pushlist! "sequence5" "south"
+        pushlist! "sequence5" "east"
+      endif
+      if not listexists "sequence6"
+        createlist "sequence6"
+        pushlist! "sequence6" "north"
+        pushlist! "sequence6" "west"
+        pushlist! "sequence6" "east"
+        pushlist! "sequence6" "south"
+      endif
+      if not listexists "sequence7"
+        createlist "sequence7"
+        pushlist! "sequence7" "south"
+        pushlist! "sequence7" "north"
+        pushlist! "sequence7" "east"
+        pushlist! "sequence7" "west"
+      endif
+      if not listexists "sequence8"
+        createlist "sequence8"
+        pushlist! "sequence8" "south"
+        pushlist! "sequence8" "north"
+        pushlist! "sequence8" "west"
+        pushlist! "sequence8" "east"
+      endif
+      if not listexists "sequence9"
+        createlist "sequence9"
+        pushlist! "sequence9" "south"
+        pushlist! "sequence9" "east"
+        pushlist! "sequence9" "north"
+        pushlist! "sequence9" "west"
+      endif
+      if not listexists "sequence10"
+        createlist "sequence10"
+        pushlist! "sequence10" "south"
+        pushlist! "sequence10" "east"
+        pushlist! "sequence10" "west"
+        pushlist! "sequence10" "north"
+      endif
+      if not listexists "sequence11"
+        createlist "sequence11"
+        pushlist! "sequence11" "south"
+        pushlist! "sequence11" "west"
+        pushlist! "sequence11" "north"
+        pushlist! "sequence11" "east"
+      endif
+      if not listexists "sequence12"
+        createlist "sequence12"
+        pushlist! "sequence12" "south"
+        pushlist! "sequence12" "west"
+        pushlist! "sequence12" "east"
+        pushlist! "sequence12" "north"
+      endif
+      if not listexists "sequence13"
+        createlist "sequence13"
+        pushlist! "sequence13" "east"
+        pushlist! "sequence13" "north"
+        pushlist! "sequence13" "south"
+        pushlist! "sequence13" "west"
+      endif
+      if not listexists "sequence14"
+        createlist "sequence14"
+        pushlist! "sequence14" "east"
+        pushlist! "sequence14" "north"
+        pushlist! "sequence14" "west"
+        pushlist! "sequence14" "south"
+      endif
+      if not listexists "sequence15"
+        createlist "sequence15"
+        pushlist! "sequence15" "east"
+        pushlist! "sequence15" "south"
+        pushlist! "sequence15" "north"
+        pushlist! "sequence15" "west"
+      endif
+      if not listexists "sequence16"
+        createlist "sequence16"
+        pushlist! "sequence16" "east"
+        pushlist! "sequence16" "south"
+        pushlist! "sequence16" "west"
+        pushlist! "sequence16" "north"
+      endif
+      if not listexists "sequence17"
+        createlist "sequence17"
+        pushlist! "sequence17" "east"
+        pushlist! "sequence17" "west"
+        pushlist! "sequence17" "north"
+        pushlist! "sequence17" "south"
+      endif
+      if not listexists "sequence18"
+        createlist "sequence18"
+        pushlist! "sequence18" "east"
+        pushlist! "sequence18" "west"
+        pushlist! "sequence18" "south"
+        pushlist! "sequence18" "north"
+      endif
+      if not listexists "sequence19"
+        createlist "sequence19"
+        pushlist! "sequence19" "west"
+        pushlist! "sequence19" "north"
+        pushlist! "sequence19" "south"
+        pushlist! "sequence19" "east"
+      endif
+      if not listexists "sequence20"
+        createlist "sequence20"
+        pushlist! "sequence20" "west"
+        pushlist! "sequence20" "north"
+        pushlist! "sequence20" "east"
+        pushlist! "sequence20" "south"
+      endif
+      if not listexists "sequence21"
+        createlist "sequence21"
+        pushlist! "sequence21" "west"
+        pushlist! "sequence21" "south"
+        pushlist! "sequence21" "north"
+        pushlist! "sequence21" "east"
+      endif
+      if not listexists "sequence22"
+        createlist "sequence22"
+        pushlist! "sequence22" "west"
+        pushlist! "sequence22" "south"
+        pushlist! "sequence22" "east"
+        pushlist! "sequence22" "north"
+      endif
+      if not listexists "sequence23"
+        createlist "sequence23"
+        pushlist! "sequence23" "west"
+        pushlist! "sequence23" "east"
+        pushlist! "sequence23" "north"
+        pushlist! "sequence23" "south"
+      endif
+      if not listexists "sequence24"
+        createlist "sequence24"
+        pushlist! "sequence24" "west"
+        pushlist! "sequence24" "east"
+        pushlist! "sequence24" "south"
+        pushlist! "sequence24" "north"
+      endif
+      setalias 'status_sequencesOk' 'self'
+    endif
+    //Choosing next sequence according to previous result
+    if list 'curr_seq' == 0
+      pause 1000
+      if @inlist 'try_number' 'try1'
+        //sequence1
+        pushlist! 'curr_seq' 'sequence1'
+        pushlist! 'tried_seq' 'sequence1' 'front'
+        pushlist 'curr_lever' sequence1[0]
+        pushlist 'curr_lever' sequence1[1]
+        pushlist 'curr_lever' sequence1[2]
+        pushlist 'curr_lever' sequence1[3]
+      elseif @inlist 'try_number' 'try2'
+        if @injournal 'the circle of souls has failed' 'system'
+          //sequence8
+          pushlist! 'curr_seq' 'sequence8'
+          pushlist! 'tried_seq' 'sequence8' 'front'
+          pushlist 'curr_lever' sequence8[0]
+          pushlist 'curr_lever' sequence8[1]
+          pushlist 'curr_lever' sequence8[2]
+          pushlist 'curr_lever' sequence8[3]
+        elseif  @injournal 'soul has turned' 'system'
+          //sequence13
+          pushlist! 'curr_seq' 'sequence13'
+          pushlist! 'tried_seq' 'sequence13' 'front'
+          pushlist 'curr_lever' sequence13[0]
+          pushlist 'curr_lever' sequence13[1]
+          pushlist 'curr_lever' sequence13[2]
+          pushlist 'curr_lever' sequence13[3]
+        elseif  @injournal 'souls have turned' 'system'
+          //sequence15
+          pushlist! 'curr_seq' 'sequence15'
+          pushlist! 'tried_seq' 'sequence15' 'front'
+          pushlist 'curr_lever' sequence15[0]
+          pushlist 'curr_lever' sequence15[1]
+          pushlist 'curr_lever' sequence15[2]
+          pushlist 'curr_lever' sequence15[3]
+        endif
+      elseif @inlist 'try_number' 'try3'
+        if @inlist 'ltried_seq' 'sequence8'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence18
+            pushlist! 'curr_seq' 'sequence18'
+            pushlist! 'tried_seq' 'sequence18' 'front'
+            pushlist 'curr_lever' sequence18[0]
+            pushlist 'curr_lever' sequence18[1]
+            pushlist 'curr_lever' sequence18[2]
+            pushlist 'curr_lever' sequence18[3]
+          elseif @injournal 'souls have turned' 'system'
+            //sequence14
+            pushlist! 'curr_seq' 'sequence14'
+            pushlist! 'tried_seq' 'sequence14' 'front'
+            pushlist 'curr_lever' sequence14[0]
+            pushlist 'curr_lever' sequence14[1]
+            pushlist 'curr_lever' sequence14[2]
+            pushlist 'curr_lever' sequence14[3]
+          endif
+        elseif @inlist 'ltried_seq'  'sequence13'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence4
+            //sequence12
+            //sequence21
+            pushlist! 'curr_seq' 'sequence4'
+            pushlist! 'curr_seq' 'sequence12'
+            pushlist! 'curr_seq' 'sequence21'
+            pushlist! 'tried_seq' 'sequence4' 'front'
+            pushlist! 'tried_seq' 'sequence12' 'front'
+            pushlist! 'tried_seq' 'sequence21' 'front'
+            pushlist 'curr_lever' sequence4[0]
+            pushlist 'curr_lever' sequence4[1]
+            pushlist 'curr_lever' sequence4[2]
+            pushlist 'curr_lever' sequence4[3]
+            pushlist 'curr_lever' sequence12[0]
+            pushlist 'curr_lever' sequence12[1]
+            pushlist 'curr_lever' sequence12[2]
+            pushlist 'curr_lever' sequence12[3]
+            pushlist 'curr_lever' sequence21[0]
+            pushlist 'curr_lever' sequence21[1]
+            pushlist 'curr_lever' sequence21[2]
+            pushlist 'curr_lever' sequence21[3]
+          elseif @injournal 'soul has turned' 'system'
+            //sequence5
+            //sequence9
+            //sequence16
+            //sequence20
+            pushlist! 'curr_seq' 'sequence5'
+            pushlist! 'curr_seq' 'sequence9'
+            pushlist! 'curr_seq' 'sequence16'
+            pushlist! 'curr_seq' 'sequence20'
+            pushlist! 'tried_seq' 'sequence5' 'front'
+            pushlist! 'tried_seq' 'sequence9' 'front'
+            pushlist! 'tried_seq' 'sequence16' 'front'
+            pushlist! 'tried_seq' 'sequence20' 'front'
+            pushlist 'curr_lever' sequence5[0]
+            pushlist 'curr_lever' sequence5[1]
+            pushlist 'curr_lever' sequence5[2]
+            pushlist 'curr_lever' sequence5[3]
+            pushlist 'curr_lever' sequence9[0]
+            pushlist 'curr_lever' sequence9[1]
+            pushlist 'curr_lever' sequence9[2]
+            pushlist 'curr_lever' sequence9[3]
+            pushlist 'curr_lever' sequence16[0]
+            pushlist 'curr_lever' sequence16[1]
+            pushlist 'curr_lever' sequence16[2]
+            pushlist 'curr_lever' sequence16[3]
+            pushlist 'curr_lever' sequence20[0]
+            pushlist 'curr_lever' sequence20[1]
+            pushlist 'curr_lever' sequence20[2]
+            pushlist 'curr_lever' sequence20[3]
+          endif
+        elseif @inlist 'ltried_seq'  'sequence15'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence6
+            pushlist! 'curr_seq' 'sequence6'
+            pushlist! 'tried_seq' 'sequence6' 'front'
+            pushlist 'curr_lever' sequence6[0]
+            pushlist 'curr_lever' sequence6[1]
+            pushlist 'curr_lever' sequence6[2]
+            pushlist 'curr_lever' sequence6[3]
+          elseif @injournal 'soul has turned' 'system'
+            //sequence3
+            pushlist! 'curr_seq' 'sequence3'
+            pushlist! 'tried_seq' 'sequence3' 'front'
+            pushlist 'curr_lever' sequence3[0]
+            pushlist 'curr_lever' sequence3[1]
+            pushlist 'curr_lever' sequence3[2]
+            pushlist 'curr_lever' sequence3[3]
+          endif
+        endif
+      elseif @inlist 'try_number' 'try4'
+        if @inlist 'ltried_seq' 'sequence18'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence23
+            pushlist! 'curr_seq' 'sequence23'
+            pushlist! 'tried_seq' 'sequence23' 'front'
+            pushlist 'curr_lever' sequence23[0]
+            pushlist 'curr_lever' sequence23[1]
+            pushlist 'curr_lever' sequence23[2]
+            pushlist 'curr_lever' sequence23[3]
+          elseif  @injournal 'souls have turned' 'system'
+            //sequence17
+            //sequence24
+            pushlist! 'curr_seq' 'sequence17'
+            pushlist! 'curr_seq' 'sequence24'
+            pushlist! 'tried_seq' 'sequence17' 'front'
+            pushlist! 'tried_seq' 'sequence24' 'front'
+            pushlist 'curr_lever' sequence17[0]
+            pushlist 'curr_lever' sequence17[1]
+            pushlist 'curr_lever' sequence17[2]
+            pushlist 'curr_lever' sequence17[3]
+            pushlist 'curr_lever' sequence24[0]
+            pushlist 'curr_lever' sequence24[1]
+            pushlist 'curr_lever' sequence24[2]
+            pushlist 'curr_lever' sequence24[3]
+          endif
+        elseif @inlist 'ltried_seq'  'sequence14'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence11
+            pushlist! 'curr_seq' 'sequence11'
+            pushlist! 'tried_seq' 'sequence11' 'front'
+            pushlist 'curr_lever' sequence11[0]
+            pushlist 'curr_lever' sequence11[1]
+            pushlist 'curr_lever' sequence11[2]
+            pushlist 'curr_lever' sequence11[3]
+          elseif  @injournal 'soul has turned' 'system'
+            //sequence10
+            //sequence19
+            pushlist! 'curr_seq' 'sequence10'
+            pushlist! 'curr_seq' 'sequence19'
+            pushlist! 'tried_seq' 'sequence10' 'front'
+            pushlist! 'tried_seq' 'sequence19' 'front'
+            pushlist 'curr_lever' sequence10[0]
+            pushlist 'curr_lever' sequence10[1]
+            pushlist 'curr_lever' sequence10[2]
+            pushlist 'curr_lever' sequence10[3]
+            pushlist 'curr_lever' sequence19[0]
+            pushlist 'curr_lever' sequence19[1]
+            pushlist 'curr_lever' sequence19[2]
+            pushlist 'curr_lever' sequence19[3]
+          endif
+        elseif @inlist 'ltried_seq'  'sequence3'
+          if @injournal 'the circle of souls has failed' 'system'
+            //sequence22
+            pushlist! 'curr_seq' 'sequence22'
+            pushlist! 'tried_seq' 'sequence22' 'front'
+            pushlist 'curr_lever' sequence22[0]
+            pushlist 'curr_lever' sequence22[1]
+            pushlist 'curr_lever' sequence22[2]
+            pushlist 'curr_lever' sequence22[3]
+          elseif @injournal 'soul has turned'
+            //sequence2
+            //sequence7
+            pushlist! 'curr_seq' 'sequence2'
+            pushlist! 'curr_seq' 'sequence7'
+            pushlist! 'tried_seq' 'sequence2' 'front'
+            pushlist! 'tried_seq' 'sequence7' 'front'
+            pushlist 'curr_lever' sequence2[0]
+            pushlist 'curr_lever' sequence2[1]
+            pushlist 'curr_lever' sequence2[2]
+            pushlist 'curr_lever' sequence2[3]
+            pushlist 'curr_lever' sequence7[0]
+            pushlist 'curr_lever' sequence7[1]
+            pushlist 'curr_lever' sequence7[2]
+            pushlist 'curr_lever' sequence7[3]
+          endif
+        endif
+      endif
+    elseif @findalias 'ready'
+      turn 'southeast'
+      partymsg 'Starting a new TRY'
+      settimer 'timedout' 0
+      @clearjournal
+      partymsg 'Current trying the sequence:'
+      partymsg curr_seq[0]
+      partymsg curr_seq[0]
+      partymsg curr_seq[0]
+      for 0 to 3 in curr_lever
+        clearlist 'lever_type1'
+        clearlist 'lever_type2'
+        if counttypeground 0x108e 'any' 15 == 1
+          pushlist 'lever_type1' 1
+          pushlist 'lever_type2' 3
+        elseif counttypeground 0x108e 'any' 15 == 2
+          pushlist 'lever_type1' 2
+          pushlist 'lever_type2' 2
+        elseif counttypeground 0x108e 'any' 15 == 3
+          pushlist 'lever_type1' 3
+          pushlist 'lever_type2' 1
+        elseif counttypeground 0x108e 'any' 15 == 4
+          pushlist 'lever_type1' 4
+          pushlist 'lever_type2' 0
+        endif
+		sysmsg lever_type1[0] 45
+        @clearjournal
+        turn curr_lever[]
+		pause 500
+        while not @direction 'self' == 3
+			turn 'southeast'
+		endwhile
+        while counttypeground 0x108e 'any' 15 == lever_type1[0]
+          if timer 'timedout' > 20000 and @injournal 'the sands of time' 'system'
+            msg 'Something is wrong with the lever puller. Stopping'
+            @unsetalias 'ready'
+          elseif timer 'timedout' > 10000
+            msg 'Taking too long to pull the lever. Waiting a little more'
+            turn curr_lever[]
+            pause 500
+            turn 'southeast'
+            pause 3000
+          endif
+        endwhile
+      endfor
+      if @findtype 0x1414 1266 'ground' 1 15
+        @unsetalias 'ready'
+      endif
+      pause 2000
+      if @injournal 'turned' 'system' or @injournal 'has failed' 'system'
+        headmsg 'Dress a shield if you want to repeat the previous sequence' 220
+        pause 5000
+        if not @findlayer 'self' 2
+          for 4
+            @poplist 'curr_lever' 'front'
+          endfor
+          if @list 'curr_seq' == 1
+            @clearlist 'ltried_seq'
+            pushlist 'ltried_seq' curr_seq[0]
+          endif
+		  @poplist 'curr_seq' 'front'
+         endif
+        @unsetalias 'ready'
+      elseif @injournal 'The circle is the key' 'system' or @injournal 'the sands of time' 'system'
+        @clearjournal
+        @unsetalias 'ready'
+      elseif @timer 'timedout' > 30000
+        @unsetalias 'ready'
+      endif
+    endif
+    //All possible combinations that require no further journal reading have been tried.
+    if list 'curr_seq' == 0
+		poplist 'try_number' 'front'
+	endif
+    //It means that you are not the thief, just another lever puller.
+  else
+    //Find the lever
+    if not @findalias 'status_leverOk'
+      if not @findobject 'lever'
+        if @findtype 0x108e 1645 'ground' 1 1
+          @setalias 'lever' 'found'
+        elseif @findtype 0x108c 1645 'ground' 1 1
+          @setalias 'lever' 'found'
+        endif
+      endif
+      setalias 'status_leverOk' 'self'
+    endif
+    @clearjournal
+    while not direction 'thief' == direction_trigger[0]
+      if hits < maxhits
+        if skill 'magery' > 70
+          bigheal 'self'
+        elseif skill 'chivalry' > 55
+          chivalryheal 'self'
+        endif
+      endif
+      pause 100
+    endwhile
+	if hits == maxhits
+		useobject! 'lever'
+		pause 5000
+	endif
+  endif
+endwhile
