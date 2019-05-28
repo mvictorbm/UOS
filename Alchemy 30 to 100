@@ -1,0 +1,100 @@
+// Alchemy from 30 to 100
+//Author: Llama Vortex
+if not @listexists 'curr_reag'
+  createlist 'curr_reag'
+endif
+while not @findobject 'restock'
+  headmsg 'Select the restock chest' 45 'self'
+  promptalias 'restock'
+  pause 3000
+endwhile
+if @ingump 0x38920abd 'empty bottle'
+  if @findtype 0xf0e 0 'restock'
+    moveitem 'found' 'backpack' 0 0 0 100
+  else
+    headmsg 'Not enough bottles in restock' 45 'self'
+    stop
+  endif
+endif
+if @ingump 0x38920abd 'have the resources'
+  if @findtype curr_reag[0] 0 'restock'
+    moveitem 'found' 'backpack' 0 0 0 1000
+  else
+    headmsg 'Not enough reagents in restock' 45 'self'
+    stop
+  endif
+endif
+if @findtype 0xe9b 0 'backpack'
+  useobject 'found'
+else
+  if @findtype 0xe9b 0 'restock'
+    moveitem 'found' 'backpack'
+    pause 650
+    replay
+  else
+    headmsg 'Not enough mortar&pestle in restock' 45 'self'
+    stop
+  endif
+endif
+if skill 'alchemy' < 30
+  headmsg 'Buy more skill!'
+  stop
+  //refresh (black pearl)
+elseif skill 'alchemy' < 60
+  @pushlist! 'curr_reag' 0xf7a 'front'
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 1
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 9
+  waitforgump 0x38920abd 3000
+  if @findtype 0xf0b 0x0 'backpack'
+    moveitem 'found' 'restock'
+  endif
+  //greater agility (blood moss)
+elseif skill 'alchemy' < 70
+  @pushlist! 'curr_reag' 0xf7b 'front'
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 8
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 9
+  waitforgump 0x38920abd 3000
+  if @findtype 0xf08 0x0 'backpack'
+    moveitem 'found' 'restock'
+  endif
+  //greater strenght (mandrake roots)
+elseif skill 'alchemy' < 80
+  @pushlist! 'curr_reag' 0xf86 'front'
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 29
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 9
+  waitforgump 0x38920abd 3000
+  if @findtype 0xf09 0x0 'backpack'
+    moveitem 'found' 'restock'
+  endif
+  //greater heal (gingseng)
+elseif skill 'alchemy' < 90
+  @pushlist! 'curr_reag' 0xf85 'front'
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 22
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 16
+  waitforgump 0x38920abd 3000
+  if @findtype 0xf0c 0x0 'backpack'
+    moveitem 'found' 'restock'
+  endif
+  //greater cure (garlic)
+elseif skill 'alchemy' < 100
+  @pushlist! 'curr_reag' 0xf84 'front'
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 43
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 16
+  waitforgump 0x38920abd 3000
+  if @findtype 0xf07 0x0 'backpack'
+    moveitem 'found' 'restock'
+  endif
+else
+  headmsg 'Alchemy complete!' 45 'self'
+  stop
+endif
