@@ -1,0 +1,70 @@
+if not timerexists 'overcast'
+  createtimer 'overcast'
+endif
+if hits < maxhits or poisoned 'self'
+  @cleartargetqueue
+  if not timerexists 'aft_target'
+    createtimer 'aft_target'
+  endif
+  if @timer 'aft_target' < 250
+  elseif targetexists 'beneficial'
+    target! 'self'
+  else
+    @clearjournal
+    miniheal 'self'
+    while waitingfortarget 'beneficial'
+      settimer 'aft_target' 0
+      if @timer 'wait_target' > 900
+        settimer 'aft_target' 300
+        headmsg 'wait target timed out' 45 'self'
+        break
+      endif
+      if @injournal 'disturbed' 'system'  or @injournal 'fizzled' 'system'
+        settimer 'aft_target' 300
+        break
+      endif
+    endwhile
+  endif
+else
+  if not @listexists 'disturb'
+    createlist 'disturb'
+    pushlist 'disturb' 14
+    pushlist 'disturb' 22
+    pushlist 'disturb' 9
+    pushlist 'disturb' 8
+    pushlist 'disturb' 1
+    pushlist 'disturb' 17
+    pushlist 'disturb' 2
+    pushlist 'disturb' 3
+    pushlist 'disturb' 4
+    pushlist 'disturb' 5
+    pushlist 'disturb' 6
+    pushlist 'disturb' 7
+    pushlist 'disturb' 10
+    pushlist 'disturb' 11
+    pushlist 'disturb' 12
+    pushlist 'disturb' 13
+    pushlist 'disturb' 15
+    pushlist 'disturb' 16
+    pushlist 'disturb' 18
+    pushlist 'disturb' 19
+    pushlist 'disturb' 20
+    pushlist 'disturb' 21
+    pushlist 'disturb' 23
+    pushlist 'disturb' 24
+    pushlist 'disturb' 25
+  endif
+  while hits > 0
+    for 0 to disturb
+      if findlayer 'self' disturb[]
+        moveitemoffset 'found' 'ground' 1 1 0
+        settimer 'overcast' 0
+      endif
+      while timer 'overcast' < 650
+        hotkeys 'off'
+        clickscreen 400 500
+        pause 10
+      endwhile
+    endfor
+  endwhile
+endif
