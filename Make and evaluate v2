@@ -6,7 +6,6 @@
 @clearlist 'make_type'
 @unsetalias 'trash'
 @unsetalias 'destbag'
-
 if not @listexists 'props_found'
   createlist 'props_found'
 endif
