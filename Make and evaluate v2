@@ -24,7 +24,7 @@ endif
 while not @findobject 'destbag'
   sysmsg 'Select a bag to destinate decent items' 45
   promptalias 'destbag'
-  while targetexists 'system'
+  while targetexists 'system
   endwhile
 endwhile
 //craft
@@ -45,7 +45,22 @@ while @findtype make_type[0] 'any' 'backpack'
   endif
   if not listexists 'must_intensity' or list 'must_intensity' == 0
     @createlist 'must_intensity'
-    @pushlist! 'must_intensity' 30
+    @pushlist! 'must_intensity' 25
+  endif
+  if not listexists 'props' or list 'props' == 0
+    @createlist 'props'
+    @pushlist! 'props' 'hit chance increase'
+    @pushlist! 'props' 'defense chance increase'
+    @pushlist! 'props' 'hit lower defense'
+    @pushlist! 'props' 'hit lower attack'
+    @pushlist! 'props' 'hit lightning'
+    @pushlist! 'props' 'hit fireball'
+    @pushlist! 'props' 'hit harm'
+    @pushlist! 'props' 'hit mana leech'
+    @pushlist! 'props' 'swing speed increase'
+    @pushlist! 'props' 'spell channeling'
+    @pushlist! 'props' 'faster casting'
+    @pushlist! 'props' 'mage weapon'
   endif
   if not listexists 'intensity' or list 'intensity' == 0
     @createlist 'intensity'
@@ -57,7 +72,7 @@ while @findtype make_type[0] 'any' 'backpack'
     @pushlist 'intensity' 30
     @pushlist 'intensity' 30
     @pushlist 'intensity' 30
-    @pushlist 'intensity' 15
+    @pushlist 'intensity' 25
     @pushlist 'intensity' -1
     @pushlist 'intensity' 0
     @pushlist 'intensity' 0
@@ -82,6 +97,7 @@ while @findtype make_type[0] 'any' 'backpack'
     @poplist 'props' 'front'
     @poplist 'intensity' 'front'
   endwhile
+  sysmsg '*******************' 45
   if list 'props_found' >= 5
     @moveitem! 'found' 'destbag'
     pause 1000
