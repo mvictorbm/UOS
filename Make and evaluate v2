@@ -2,24 +2,26 @@
 //Author: Llama
 //Make sure that the item to make is set as "make last"
 //v2: including must have props
-if not listexists 'props_found'
+if not @listexists 'props_found'
   createlist 'props_found'
 endif
-if not listexists 'runic'
+if not @listexists 'runic'
   @createlist 'runic'
   //runic type
   @pushlist 'runic' 0x13e3
   //runic color
   @pushlist 'runic' 2219
 endif
-if not listexists 'make_type'
+if not @listexists 'make_type'
   @createlist 'make_type'
   //item that you are currently making type
   @pushlist 'make_type' 0xf47
 endif
+//--------------------------------------------------------
+//--------------------------------------------------------
 if not @findobject 'trash'
-  findtype 0xe77 946 'ground' 1 2
-  setalias 'trash' 'found'
+  @findtype 0xe77 946 'ground' 1 2
+  @setalias 'trash' 'found'
 endif
 while not @findobject 'destbag'
   sysmsg 'Select a bag to destinate decent items' 45
@@ -38,15 +40,15 @@ if @findtype runic[0] runic[1] 'backpack'
   endif
 endif
 while @findtype make_type[0] 'any' 'backpack'
-  if not listexists 'props' or list 'props' == 0
+  if not @listexists 'props' or list 'props' == 0
     @createlist 'must_props'
     @pushlist! 'must_props' 'swing speed increase'
   endif
-  if not listexists 'must_intensity' or list 'must_intensity' == 0
+  if not @listexists 'must_intensity' or list 'must_intensity' == 0
     @createlist 'must_intensity'
     @pushlist! 'must_intensity' 25
   endif
-  if not listexists 'props' or list 'props' == 0
+  if not @listexists 'props' or list 'props' == 0
     @createlist 'props'
     @pushlist! 'props' 'hit chance increase'
     @pushlist! 'props' 'defense chance increase'
@@ -61,7 +63,7 @@ while @findtype make_type[0] 'any' 'backpack'
     @pushlist! 'props' 'faster casting'
     @pushlist! 'props' 'mage weapon'
   endif
-  if not listexists 'intensity' or list 'intensity' == 0
+  if not @listexists 'intensity' or list 'intensity' == 0
     @createlist 'intensity'
     @pushlist 'intensity' 10
     @pushlist 'intensity' 10
@@ -84,7 +86,7 @@ while @findtype make_type[0] 'any' 'backpack'
     else
       @moveitem 'found' 'trash'
       //pause 650
-      ignoreobject 'found'
+      @ignoreobject 'found'
       @unsetalias 'found'
     endif
     @poplist 'must_props' 'front'
@@ -102,7 +104,7 @@ while @findtype make_type[0] 'any' 'backpack'
   if list 'props_found' >= 4
     @moveitem! 'found' 'destbag'
     pause 1000
-    ignoreobject 'found'
+    @ignoreobject 'found'
   else
     //smelt
     //replygump 0x38920abd 14
@@ -111,7 +113,7 @@ while @findtype make_type[0] 'any' 'backpack'
     //waitforgump 0x38920abd 2500
     //move to trash
     @moveitem 'found' 'trash'
-    ignoreobject 'found'
+    @ignoreobject 'found'
     @unsetalias 'found'
   endif
   @clearlist 'props_found'
