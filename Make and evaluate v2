@@ -83,7 +83,10 @@ while @findtype make_type[0] 'any' 'backpack'
       sysmsg 'must props found' 45
     else
       moveitem 'found' 'trash'
+      pause 650
+      break
       ignoreobject 'found'
+      @unsetalias 'found'
     endif
     @poplist 'must_props' 'front'
     @poplist 'must_intensity' 'front'
@@ -101,6 +104,7 @@ while @findtype make_type[0] 'any' 'backpack'
     @moveitem! 'found' 'destbag'
     pause 1000
     ignoreobject 'found'
+    @unsetalias 'found'
   else
     //smelt
     //replygump 0x38920abd 14
@@ -110,6 +114,7 @@ while @findtype make_type[0] 'any' 'backpack'
     //move to trash
     moveitem 'found' 'trash'
     ignoreobject 'found'
+    @unsetalias 'found'
   endif
   @clearlist 'props_found'
 endwhile
