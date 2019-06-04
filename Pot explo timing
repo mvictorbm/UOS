@@ -1,0 +1,27 @@
+@cleartargetqueue
+if targetexists
+  canceltarget
+  pause 50
+endif
+if not timerexists 't_explo'
+  createtimer 't_explo'
+endif
+while @findtype 0xf0d 0 'backpack' 2
+  ignoreobject 'found'
+endwhile
+if @findtype 0xf0d 0 'backpack' 1
+  useobject 'found'
+  unsetalias 'explo_active'
+  waitfortarget 500
+  if @inrange 'enemy' 9
+    target! 'enemy'
+  else
+    targettilerelative! 'self' 5
+  endif
+else
+  usetype 0xf0d 0 'backpack'
+  settimer 't_explo' 0
+  setalias 'explo_active' 'self'
+  waitfortarget 500
+  canceltarget
+endif
