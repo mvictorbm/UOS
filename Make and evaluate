@@ -23,7 +23,8 @@ endif
 while not @findalias 'destbag'
   sysmsg 'Select a bag to destinate decent items' 45
   promptalias 'destbag'
-  pause 5000
+  while targetexists 'system'
+  endwhile
 endwhile
 //craft
 if @findtype runic[0] runic[1] 'backpack'
@@ -77,6 +78,7 @@ while @findtype make_type[0] 'any' 'backpack'
   endwhile
   if list 'props_found' >= 3
     @moveitem! 'found' 'destbag'
+    ignoreobject 'found'
     pause 1000
   else
     //smelt
