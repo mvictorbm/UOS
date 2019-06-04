@@ -38,7 +38,6 @@ if @findtype runic[0] runic[1] 'backpack'
   endif
 endif
 while @findtype make_type[0] 'any' 'backpack'
-  if not listexists 'must_props' or list 'must_props' == 0
   if not listexists 'props' or list 'props' == 0
     @createlist 'must_props'
     @pushlist! 'must_props' 'swing speed increase'
@@ -83,8 +82,8 @@ while @findtype make_type[0] 'any' 'backpack'
     if @property must_props[0] 'found' >= must_intensity[0]
       sysmsg 'must props found' 45
     else
-       moveitem 'found' 'trash'
-       ignoreobject 'found'
+      moveitem 'found' 'trash'
+      ignoreobject 'found'
     endif
     @poplist 'must_props' 'front'
     @poplist 'must_intensity' 'front'
