@@ -82,9 +82,8 @@ while @findtype make_type[0] 'any' 'backpack'
     if @property must_props[0] 'found' >= must_intensity[0]
       sysmsg 'must props found' 45
     else
-      moveitem 'found' 'trash'
-      pause 650
-      break
+      @moveitem 'found' 'trash'
+      //pause 650
       ignoreobject 'found'
       @unsetalias 'found'
     endif
@@ -100,11 +99,10 @@ while @findtype make_type[0] 'any' 'backpack'
     @poplist 'intensity' 'front'
   endwhile
   sysmsg '*******************' 45
-  if list 'props_found' >= 5
+  if list 'props_found' >= 4
     @moveitem! 'found' 'destbag'
     pause 1000
     ignoreobject 'found'
-    @unsetalias 'found'
   else
     //smelt
     //replygump 0x38920abd 14
@@ -112,7 +110,7 @@ while @findtype make_type[0] 'any' 'backpack'
     //target! 'found'
     //waitforgump 0x38920abd 2500
     //move to trash
-    moveitem 'found' 'trash'
+    @moveitem 'found' 'trash'
     ignoreobject 'found'
     @unsetalias 'found'
   endif
