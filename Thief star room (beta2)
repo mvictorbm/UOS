@@ -47,13 +47,6 @@ if not @listexists 'tosteal'
   createlist 'tosteal'
 endif
 while hits > 0
-  if not hidden 'self' or hits < maxhits
-    usetype 0xf6c 0 'ground'
-    waitforgump 0xe0e675b8 1500
-    replygump 0xe0e675b8 1 300
-    pause 1000
-    stop
-  endif
   if timer 't_clearignore' > 600000
     settimer 't_clearignore' 0
     replay
@@ -67,6 +60,13 @@ while hits > 0
         break
       endif
     endfor
+	if not hidden 'self' or hits < maxhits
+		usetype 0xf6c 0 'ground'
+		waitforgump 0xe0e675b8 1500
+		replygump 0xe0e675b8 1 300
+		pause 1000
+		stop
+	endif
   endwhile
   if @findlayer 'targetplayer' 21
     @setalias 'targetbag' 'found'
