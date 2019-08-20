@@ -1,7 +1,7 @@
 //starts fresh
 //Scape if successfuly stolen or hurt
 pause 500
-if injournal "You successfully" 'system' or hits < 90
+if injournal "You successfully" 'system' or hits < maxhits
   clearjournal
   usetype 0xf6c 0 'ground'
   waitforgump 0xe0e675b8 1500
@@ -39,7 +39,6 @@ if not listexists 'priority'
   createlist 'priority'
   pushlist 'priority' 'archery'
   pushlist 'priority' 'magery'
-  pushlist 'priority' 'focus'
   pushlist 'priority' 'evaluating intelligence'
   pushlist 'priority' 'swordsmanship'
   pushlist 'priority' 'tactics'
@@ -48,8 +47,12 @@ if not @listexists 'tosteal'
   createlist 'tosteal'
 endif
 while hits > 0
-  if not hidden 'self'
-    useskill 'hiding'
+  if not hidden 'self' or hits < maxhits
+    usetype 0xf6c 0 'ground'
+    waitforgump 0xe0e675b8 1500
+    replygump 0xe0e675b8 1 300
+    pause 1000
+    stop
   endif
   if timer 't_clearignore' > 600000
     settimer 't_clearignore' 0
@@ -74,35 +77,37 @@ while hits > 0
     useobject! 'targetbag'
   endif
   //A runebook or atlas book was found, but no PS. It means you managed to open the bag.
-  //if not @findtype 0x14f0 1153 'targetbag'
-  //  if @findtype 0x9c16 'any' 'targetbag' or @findtype 0x22c5 'any' 'targetbag'
-  //    sysmsg 'The player has no PS in his bag' 45
-  //   ignoreobject 'targetplayer'
-  //    ignoreobject 'targetbag'
-  //    unsetalias 'targetplayer'
-  //    unsetalias 'targetbag'
-  //  endif
-  //endif
-  while @findtype 0x14f0 1153 'targetbag' and @inrange 'targetplayer' 2
-    waitforproperties 'found' 500
-    if property 120 'found'
-      pushlist 'tosteal' 'found'
-      //sysmsg 'found a 120 PS' 45
-      for 0 to priority
-        if property priority[] 'found'
-          sysmsg '*** stealing a priority 120 ***' 45
-          useskill 'stealing'
-          waitfortarget 500
-          target! 'found'
-          clearlist 'tosteal'
-          replay
-        endif
-      endfor
-      ignoreobject 'found'
-    else
-      ignoreobject 'found'
+  if @findtype 0x9c16 'any' 'targetbag' or @findtype 0x22c5 'any' 'targetbag'
+    if not @findtype 0x14f0 1153 'targetbag'
+      sysmsg 'The player has no PS in his bag' 45
+      ignoreobject 'targetplayer'
+      ignoreobject 'targetbag'
+      unsetalias 'targetplayer'
+      unsetalias 'targetbag'
     endif
-  endwhile
+  endif
+  if @findalias 'targetbag'
+    while @findtype 0x14f0 1153 'targetbag' and @inrange 'targetplayer' 2
+      waitforproperties 'found' 500
+      if property 120 'found'
+        pushlist 'tosteal' 'found'
+        //sysmsg 'found a 120 PS' 45
+        for 0 to priority
+          if property priority[] 'found'
+            sysmsg '*** stealing a priority 120 ***' 45
+            useskill 'stealing'
+            waitfortarget 500
+            target! 'found'
+            clearlist 'tosteal'
+            replay
+          endif
+        endfor
+        ignoreobject 'found'
+      else
+        ignoreobject 'found'
+      endif
+    endwhile
+  endif
   //No priority PS was found stealing a random 120
   if list 'tosteal' > 0 and @inrange 'targetplayer' 2
     sysmsg 'stealing a random 120' 45
@@ -112,4 +117,5 @@ while hits > 0
     clearlist 'tosteal'
     replay
   endif
+  pause 50
 endwhile
