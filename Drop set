@@ -55,14 +55,17 @@ else
     pushlist 'disturb' 25
   endif
   while hits > 0
+	hotkeys 'off'
     for 0 to disturb
-      if findlayer 'self' disturb[]
+      if @findlayer 'self' disturb[]
         moveitemoffset 'found' 'ground' 1 1 0
+		messagebox 'HZ wins!' 'HZ wins!'
         settimer 'overcast' 0
       endif
-      while timer 'overcast' < 650
-        hotkeys 'off'
+      while @timer 'overcast' < 650
+		hotkeys 'off'
         clickscreen 400 500
+		messagebox 'HZ wins!' 'HZ wins!'
         pause 10
       endwhile
     endfor
