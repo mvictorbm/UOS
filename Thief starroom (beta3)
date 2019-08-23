@@ -1,5 +1,5 @@
-//starts fresh
-//Scape if successfuly stolen or hurt
+//Using findtype instead of getenemy in order to be able to ignore targets after searching them for scrolls
+//Scape if successfuly steal, hurt or not hidden
 if @injournal "You successfully" 'system' or hits < maxhits
   clearjournal
   usetype 0xf6c 0 'ground'
@@ -64,7 +64,7 @@ while hits == maxhits and hidden 'self'
     for 0 to mybodies
       if @findtype mybodies[] 'any' 'ground' 1 2
         @setalias 'targetplayer' 'found'
-        headmsg 'I am the target' 13 'targetplayer'
+        headmsg 'I am the target' 16 'targetplayer'
         break
       endif
     endfor
@@ -72,7 +72,7 @@ while hits == maxhits and hidden 'self'
     if not @findobject 'targetbag'
       if @findlayer 'targetplayer' 21
         @setalias 'targetbag' 'found'
-        headmsg 'Target bag is set' 13
+        headmsg 'Target bag is set' 16
       else
         ignoreobject 'targetplayer'
         @unsetalias 'targetplayer'
@@ -84,7 +84,7 @@ while hits == maxhits and hidden 'self'
       //A runebook or atlas book was found, but no PS. It means you managed to open the bag.
       if @findtype 0x9c16 'any' 'targetbag' or @findtype 0x22c5 'any' 'targetbag'
         if not @findtype 0x14f0 1153 'targetbag'
-          sysmsg 'The player has no PS in his bag' 13
+          sysmsg 'The player has no PS in his bag' 16
           @ignoreobject 'targetplayer'
           @ignoreobject 'targetbag'
           @unsetalias 'targetplayer'
@@ -97,10 +97,10 @@ while hits == maxhits and hidden 'self'
           waitforproperties 'found' 500
           if property 120 'found'
             pushlist 'tosteal' 'found'
-            sysmsg 'found a 120 PS' 13
+            sysmsg 'found a 120 PS' 16
             for 0 to priority
               if property priority[] 'found'
-                sysmsg '*** Stealing a priority 120 ***' 13
+                sysmsg '*** Stealing a priority 120 ***' 16
                 useskill 'stealing'
                 waitfortarget 500
                 target! 'found'
@@ -116,7 +116,7 @@ while hits == maxhits and hidden 'self'
       endif
       //No priority PS was found stealing a random 120
       if list 'tosteal' > 0 and @inrange 'targetplayer' 2
-        sysmsg 'Stealing a random 120' 13
+        sysmsg 'Stealing a random 120' 16
         useskill 'stealing'
         waitfortarget 500
         target! tosteal[0]
