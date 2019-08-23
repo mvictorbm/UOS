@@ -14,7 +14,7 @@ if not hidden 'self'
   pause 1000
 endif
 if @inregion 'guards' 'self' or dead 'self'
-  //stop
+  stop
 endif
 @unsetalias 'targetplayer'
 @unsetalias 'targetbag'
