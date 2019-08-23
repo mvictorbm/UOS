@@ -138,7 +138,7 @@ while not dead 'self'
   endif
   @getenemy 'criminal' 'enemy' 'murderer' 'gray' 'closest'
   if not @inrange 'enemy' 7
-    if hits < maxhits or @poisoned 'self'
+    if diffhits > 20 or @poisoned 'self'
       chivalryheal 'self'
       while waitingfortarget
       endwhile
