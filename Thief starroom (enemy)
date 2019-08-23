@@ -1,0 +1,89 @@
+//starts fresh
+//Scape if successfuly stolen or hurt
+pause 500
+if injournal "You successfully" 'system' or hits < maxhits
+  clearjournal
+  usetype 0xf6c 0 'ground'
+  waitforgump 0xe0e675b8 1500
+  replygump 0xe0e675b8 1 300
+  pause 1000
+endif
+@unsetalias 'enemy'
+@unsetalias 'targetbag'
+@clearlist 'tosteal'
+@clearignorelist
+if not timerexists 't_clearignore'
+  createtimer 't_clearignore'
+endif
+if @findlayer 'self' 1  or @findlayer 'self' 2
+  clearhands 'both'
+  pause 1200
+endif
+if not listexists 'priority'
+  createlist 'priority'
+  pushlist 'priority' 'archery'
+  pushlist 'priority' 'magery'
+  pushlist 'priority' 'evaluating intelligence'
+  pushlist 'priority' 'swordsmanship'
+  pushlist 'priority' 'tactics'
+endif
+if not @listexists 'tosteal'
+  createlist 'tosteal'
+endif
+//Main loop
+while hits > 0
+  if @inregion 'guards' 'self'
+    //stop
+  endif
+  @getenemy 'criminal' 'grey' 'enemy' 'murderer' 'innocent' 'humanoid' 'transformation' 'nearest'
+  if not hidden 'self' or hits < maxhits
+    usetype 0xf6c 0 'ground'
+    waitforgump 0xe0e675b8 1500
+    replygump 0xe0e675b8 1 300
+    pause 1000
+  endif
+  if not inrange 'enemy' 2 or not @findlayer 'enemy' 21
+    @unsetalias 'enemy'
+  else
+    @setalias 'targetbag' 'found'
+    useobject! 'targetbag'
+    //A runebook or atlas book was found, but no PS. It means you managed to open the bag.
+    if @findtype 0x9c16 'any' 'targetbag' or @findtype 0x22c5 'any' 'targetbag'
+      if not @findtype 0x14f0 1153 'targetbag'
+        sysmsg 'The player has no PS in his bag' 45
+        @unsetalias 'enemy'
+        @unsetalias 'targetbag'
+      endif
+    endif
+    while @findtype 0x14f0 1153 'targetbag' and @inrange 'enemy' 2
+      waitforproperties 'found' 500
+      if property 120 'found'
+        pushlist 'tosteal' 'found'
+        //sysmsg 'found a 120 PS' 45
+        for 0 to priority
+          if property priority[] 'found'
+            sysmsg '*** stealing a priority 120 ***' 45
+            useskill 'stealing'
+            waitfortarget 500
+            target! 'found'
+            clearlist 'tosteal'
+            replay
+          endif
+        endfor
+        ignoreobject 'found'
+      else
+        ignoreobject 'found'
+      endif
+    endwhile
+    //No priority PS was found stealing a random 120
+    if list 'tosteal' > 0 and @inrange 'enemy' 2
+      sysmsg 'stealing a random 120' 45
+      useskill 'stealing'
+      waitfortarget 500
+      target! tosteal[0]
+      clearlist 'tosteal'
+      replay
+    endif
+    pause 50
+  endif
+endwhile
