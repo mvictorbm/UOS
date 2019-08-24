@@ -1,21 +1,6 @@
 //Using findtype instead of getenemy in order to be able to ignore targets after searching them for scrolls
 //Scape if successfuly steal, hurt or not hidden
-if @injournal "You successfully" 'system' or hits < maxhits
-  clearjournal
-  usetype 0xf6c 0 'ground'
-  waitforgump 0xe0e675b8 1500
-  replygump 0xe0e675b8 1 300
-  pause 1000
-endif
-if not hidden 'self'
-  usetype 0xf6c 0 'ground'
-  waitforgump 0xe0e675b8 1500
-  replygump 0xe0e675b8 1 300
-  pause 1000
-endif
-if @inregion 'guards' 'self' or dead 'self'
-  stop
-endif
+sysmsg 'Star room thief by Llama' 16
 @unsetalias 'targetplayer'
 @unsetalias 'targetbag'
 @clearlist 'tosteal'
@@ -27,6 +12,15 @@ endif
 if @findlayer 'self' 1  or @findlayer 'self' 2
   clearhands 'both'
   pause 1200
+endif
+if not hidden 'self'
+  useskill 'hiding'
+  pause 100
+endif
+if not hits == maxhits or poisoned 'self'
+  bigheal 'self'
+  while waitingfortarget
+  endwhile
 endif
 if not @listexists 'mybodies'
   createlist 'mybodies'
@@ -55,7 +49,7 @@ if not @listexists 'tosteal'
   createlist 'tosteal'
 endif
 //Main loop
-while hits == maxhits and hidden 'self'
+while diffhits < 20 and hidden 'self'
   if timer 't_clearignore' > 600000
     settimer 't_clearignore' 0
     replay
@@ -65,6 +59,7 @@ while hits == maxhits and hidden 'self'
       if @findtype mybodies[] 'any' 'ground' 1 2
         @setalias 'targetplayer' 'found'
         headmsg 'I am the target' 16 'targetplayer'
+        playsound 'kick.wav'
         break
       endif
     endfor
@@ -105,7 +100,7 @@ while hits == maxhits and hidden 'self'
                 waitfortarget 500
                 target! 'found'
                 clearlist 'tosteal'
-                replay
+                break
               endif
             endfor
             @ignoreobject 'found'
@@ -121,9 +116,26 @@ while hits == maxhits and hidden 'self'
         waitfortarget 500
         target! tosteal[0]
         clearlist 'tosteal'
-        replay
+        break
       endif
     endif
   endif
   pause 50
 endwhile
+if @injournal "You successfully" 'system' or hits < maxhits
+  clearjournal
+  usetype 0xf6c 0 'ground'
+  waitforgump 0xe0e675b8 1500
+  replygump 0xe0e675b8 1 300
+  pause 1000
+endif
+if not hidden 'self'
+  usetype 0xf6c 0 'ground'
+  waitforgump 0xe0e675b8 1500
+  replygump 0xe0e675b8 1 300
+  pause 1000
+endif
+if @inregion 'guards' 'self' or dead 'self'
+  playsound 'lost.wav'
+  stop
+endif
