@@ -1,0 +1,71 @@
+// get item to poison
+if not @findobject 'topoison'
+  promptalias 'topoison'
+  sysmsg 'Select an item to poison' 45
+  pause 1000
+  while targetexists 'system'
+  endwhile
+endif
+if not @listexists 'curr_reag'
+  createlist 'curr_reag'
+  @pushlist! 'curr_reag' 0xf7a
+endif
+if not @findobject 'restock'
+  promptalias 'restock'
+  headmsg 'Select the restock chest' 45 'self'
+  pause 1000
+  while targetexists 'system'
+  endwhile
+endif
+if @ingump 0x38920abd 'empty bottle'
+  if @findtype 0xf0e 0 'restock'
+    moveitem 'found' 'backpack' 0 0 0 100
+  else
+    headmsg 'Not enough bottles in restock' 45 'self'
+    stop
+  endif
+endif
+if @ingump 0x38920abd 'have the resources'
+  if @findtype curr_reag[0] 0 'restock'
+    moveitem 'found' 'backpack' 0 0 0 1000
+  else
+    headmsg 'Not enough reagents in restock' 45 'self'
+    stop
+  endif
+endif
+if @findtype 0xe9b 0 'backpack'
+  useobject 'found'
+else
+  if @findtype 0xe9b 0 'restock'
+    moveitem 'found' 'backpack'
+    pause 650
+    replay
+  else
+    headmsg 'Not enough mortar&pestle in restock' 45 'self'
+    stop
+  endif
+endif
+//
+while not @findtype 0xf0a 0 backpack
+  waitforgump 0x38920abd 5000
+  if skill 'Poisoning' < 40
+    replygump 0x38920abd 2
+  elseif skill 'Poisoning' < 60
+    replygump 0x38920abd 9
+  elseif skill 'Poisoning' < 99
+    replygump 0x38920abd 16
+  else
+    replygump 0x38920abd 23
+  endif
+  pause 2000
+endwhile
+while @findtype 0xf0a 0 'backpack'
+  @setalias 'poisonPotion' 'found'
+  //
+  useskill 'Poisoning'
+  waitfortarget 2000
+  target! 'poisonPotion'
+  waitfortarget 2000
+  target! 'topoison'
+  pause 8000
+endwhile
