@@ -1,0 +1,41 @@
+if not hidden 'self'
+  findtype 0xf6c 0 'ground' 1 2
+  setalias 'gate' 'found'
+  if @inrange 'gate' 2
+    useobject 'gate'
+    if @x 'self' < 3200
+      //go new heaven
+      waitforgump 0xe0e675b8 1500
+      replygump 0xe0e675b8 1 8
+    else
+      //go minoc trammel
+      waitforgump 0xe0e675b8 1500
+      replygump 0xe0e675b8 1 4
+    endif
+  else
+    if @x 'gate' > x 'self' and @y 'gate' > y 'self'
+      walk 'southeast'
+    elseif @x 'gate' < x 'self' and @y 'gate' > y 'self'
+      walk 'southwest'
+    elseif @x 'gate' > x 'self' and @y 'gate' < y 'self'
+      walk 'northeast'
+    elseif @x 'gate' < x 'self' and @y 'gate' < y 'self'
+      walk 'northwest'
+    elseif @x 'gate' > x 'self' and @y 'gate' == y 'self'
+      walk 'east'
+    elseif @x 'gate' < x 'self' and @y 'gate' == y 'self'
+      walk 'west'
+    elseif @x 'gate' == x 'self' and @y 'gate' > y 'self'
+      walk 'south'
+    elseif @x 'gate' == x 'self' and @y 'gate' < y 'self'
+      walk 'north'
+    endif
+  endif
+else
+  walk "West"
+  walk "West"
+  walk "West"
+  walk "East"
+  walk "East"
+  walk "East"
+endif
