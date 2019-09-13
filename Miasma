@@ -1,0 +1,124 @@
+///////////////////////////// SETUP ///////////////////////////////////////
+//Timers
+if not timerexists 't_honor'
+  createtimer 't_honor'
+endif
+if not timerexists 'nocast'
+  @settimer 'nocast' 2000
+endif
+//Mount
+if not @findalias 'mount'
+  @setalias 'mount' 0x3ef74
+endif
+//Logout if dead
+if dead 'self'
+  if @inrange 'mount' 5
+    logoutbutton
+  else
+    stop
+  endif
+endif
+if @findtype 0x30 2301 'ground'
+  @setalias 'enemy' 'found'
+  headmsg '[ENEMY]' 16 'enemy'
+  target! 'enemy'
+  settimer 't_honor' 0
+  setalias 'enemymiasma' 'self'
+else
+  @getenemy 'gray' 'criminal' 'closest'
+  @unsetalias 'enemymiasma'
+  if not @inrange 'enemy' 1
+    @unsetalias 'enemy'
+  endif
+endif
+if @poisoned 'self' or diffhits > 30
+  if targetexists
+    canceltarget
+  endif
+  chivalryheal 'self'
+  pause 4000
+else
+  if not targetexists and timer 't_honor' > 10000
+    virtue 'honor'
+  endif
+  if timer 't_honor' > 20000
+    if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
+      cast 'curse Weapon'
+      @settimer 'nocast' 0
+    endif
+  endif
+  if not buffexists 'enemy of one' and findalias 'enemymiasma'
+    cast 'enemy of one'
+  endif
+endif
+///////////////////////////////////////////////////////////////////////////
+////////////////////// END OF SETUP ///////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+//Main loop
+while @inrange 'enemy' 15
+  if not @inrange 'enemy' 1 and @findalias 'walk'
+    if dead
+      stop
+    elseif @x 'enemy' > x 'self' and @y 'enemy' > y 'self'
+      run 'southeast'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' > y 'self'
+      run 'southwest'
+    elseif @x 'enemy' > x 'self' and @y 'enemy' < y 'self'
+      run 'northeast'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' < y 'self'
+      run 'northwest'
+    elseif @x 'enemy' > x 'self' and @y 'enemy' == y 'self'
+      run 'east'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' == y 'self'
+      run 'west'
+    elseif @x 'enemy' == x 'self' and @y 'enemy' > y 'self'
+      run 'south'
+    elseif @x 'enemy' == x 'self' and @y 'enemy' < y 'self'
+      run 'north'
+    endif
+  endif
+  settimer 't_honor' 0
+  attack 'enemy'
+  if mana > 20
+    @setability 'secondary' 'on'
+  elseif not buffexists 'lightning strike'
+    cast 'lightning strike'
+  endif
+  //Send money
+  if @findtype 0xe76 'any' 'backpack' 1 0
+    waitforproperties 'found' 1000
+    if @property 'Charges' 'found' <= 5
+      //headmsg '# Atenção - Bag of Sending #' 63
+    elseif @property 'Charges' 'found' == 0
+      headmsg '# Bag of Sending charges: 0 #' 63
+    endif
+    if weight 'self' > 400
+      if usetype! 0xe76
+        waitfortarget 1000
+        targettype! 0xeed
+        pause 500
+      endif
+    endif
+  endif
+  //Cast spells
+  if timer 'nocast' > 2000 and @inrange 'enemy' 10
+    if diffhits > 10
+      if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
+        cast 'curse Weapon'
+        @settimer 'nocast' 1500
+      endif
+    elseif not buffexists 'Consecrate Weapon' and mana 'self' >= 15
+      @cast 'consecrate weapon'
+      @settimer 'nocast' 0
+    endif
+    if hits > 80 and stam < 50
+      if mana 'self' >= 12
+        @cast "Divine Fury"
+        @settimer 'nocast' 0
+      endif
+    endif
+    if not buffexists 'enemy of one' and findalias 'enemymiasma'
+      cast 'enemy of one'
+    endif
+  endif
+endwhile
