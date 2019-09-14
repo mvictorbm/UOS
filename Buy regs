@@ -1,0 +1,253 @@
+@removelist 'regbook'
+@removelist 'Runes1'
+@removelist 'Runes2'
+@clearjournal
+pause 200
+if not @findalias 'reg storage'
+  headmsg 'select the storage'
+  promptalias 'reg storage'
+endif
+if not @findobject 'regbook1'
+  promptalias 'regbook1'
+endif
+if not @findobject 'regbook2'
+  promptalias 'regbook2'
+endif
+if not @findobject 'bankbook'
+  promptalias 'bankbook'
+endif
+if not listexists 'regbook'
+  createlist 'regbook''
+  pushlist 'regbook' 'regbook1'
+  pushlist 'regbook' 'regbook2'
+endif
+if not listexists 'Runes1'
+  @createlist 'Runes1'
+  pushlist 'Runes1' 5
+  pushlist 'Runes1' 11
+  pushlist 'Runes1' 17
+  pushlist 'Runes1' 23
+  pushlist 'Runes1' 29
+  pushlist 'Runes1' 35
+  pushlist 'Runes1' 41
+  pushlist 'Runes1' 47
+  pushlist 'Runes1' 53
+  pushlist 'Runes1' 59
+  pushlist 'Runes1' 65
+  pushlist 'Runes1' 71
+  pushlist 'Runes1' 77
+  pushlist 'Runes1' 83
+  //pushlist 'Runes1' 89
+  //pushlist 'Runes1' 95
+endif
+if not listexists 'Runes2'
+  @createlist 'Runes2'
+  //pushlist 'Runes2' 5
+  //pushlist 'Runes2' 11
+  //pushlist 'Runes2' 17
+  //pushlist 'Runes2' 23
+  //pushlist 'Runes2' 29
+  //pushlist 'Runes2' 35
+  //pushlist 'Runes2' 41
+  //pushlist 'Runes2' 47
+  //pushlist 'Runes2' 53
+  //pushlist 'Runes2' 59
+  //pushlist 'Runes2' 65
+  pushlist 'Runes2' 71
+  //pushlist 'Runes2' 77
+  pushlist 'Runes2' 83
+  pushlist 'Runes2' 89
+  pushlist 'Runes2' 95
+endif
+if not listexists 'reglist'
+  @createlist 'reglist'
+  pushlist 'reglist' 0xf7a
+  pushlist 'reglist' 0xf7b
+  pushlist 'reglist' 0xf84
+  pushlist 'reglist' 0xf85
+  pushlist 'reglist' 0xf86
+  pushlist 'reglist' 0xf88
+  pushlist 'reglist' 0xf8d
+  pushlist 'reglist' 0xf8c
+  pushlist 'reglist' 0xf78
+  pushlist 'reglist' 0xf7d
+  pushlist 'reglist' 0xf8f
+  pushlist 'reglist' 0xf8e
+  pushlist 'reglist' 0xf8a
+  pushlist 'reglist' 0xf0e
+endif
+if not listexists 'npcbodies'
+  createlist 'npcbodies'
+  pushlist 'npcbodies' 0x190
+  pushlist 'npcbodies' 0x191
+endif
+@removelist 'NPC Names'
+if not listexists 'NPCNames'
+  createlist 'NPCNames'
+  pushlist 'NPCNames' Mage
+  pushlist 'NPCNames' Alchemist
+  pushlist 'NPCNames' Herbalist
+  pushlist 'NPCNames' Necromancer
+  pushlist 'NPCNames' Reagent Man
+endif
+if not timerexists 'hourloop'
+  createtimer 'hourloop'
+endif
+settimer 'hourloop' 0
+clearignorelist
+@clearjournal
+//book 1
+for 0 to 'Runes1'
+  while mana < 20
+  endwhile
+  if @injournal 'world will save' 'system'
+    pause 30000
+    @clearjournal
+  endif
+  useobject 'regbook1'
+  waitforgump 0x554b87f3 5000
+  sysmsg 'Book1' 33
+  sysmsg 'Runes1[]' 33
+  replygump 0x554b87f3 Runes1[]
+  pause 4000
+  for 0 to 'npcbodies'
+    while @findtype npcbodies[] 'any' 'ground' 1 10
+      waitforproperties 'found' 5000
+      if not property 'guild' 'found' and not property 'instructor' 'found'
+        if not property 'quest' 'found'
+          for 0 to 'NPCNames'
+            if property NPCNames[] 'found'
+              waitforcontext 'found' 1 5000
+              pause 1000
+            endif
+          endfor
+        endif
+      endif
+      for 0 to 'reglist'
+        if @counttype reglist[] 'any' 'backpack' > 998
+          @setalias 'unloadregs' 'bankbook'
+        endif
+      endfor
+      if @findalias 'unloadregs'
+        if @injournal 'world will save' 'system'
+          pause 30000
+          @clearjournal
+        endif
+        useobject 'bankbook'
+        waitforgump 0x554b87f3 5000
+        replygump 0x554b87f3 5
+        pause 4000
+        msg 'bank'
+        pause 2000
+        for 0 to 'reglist'
+          while @findtype reglist[] 'any' 'backpack'
+            moveitem 'found' 'reg storage'
+            pause 1000
+          endwhile
+        endfor
+        while mana < 20
+        endwhile
+        if @injournal 'world will save' 'system'
+          pause 30000
+          @clearjournal
+        endif
+        useobject 'regbook1'
+        waitforgump 0x554b87f3 5000
+        sysmsg 'Book1' 33
+        sysmsg 'Runes1[]' 33
+        replygump 0x554b87f3 Runes1[]
+        pause 4000
+        @unsetalias 'unloadregs'
+      else
+        ignoreobject 'found'
+      endif
+    endwhile
+  endfor
+endfor
+//book 2
+for 0 to 'Runes2'
+  while mana < 20
+  endwhile
+  if @injournal 'world will save' 'system'
+    pause 30000
+    @clearjournal
+  endif
+  useobject 'regbook2'
+  waitforgump 0x554b87f3 5000
+  sysmsg 'Book2' 33
+  sysmsg 'Runes2[]' 33
+  replygump 0x554b87f3 Runes2[]
+  pause 4000
+  for 0 to 'npcbodies'
+    while @findtype npcbodies[] 'any' 'ground' 1 10
+      waitforproperties 'found' 5000
+      if not property 'guild' 'found' and not property 'instructor' 'found'
+        if not property 'quest' 'found'
+          for 0 to 'NPCNames'
+            if property NPCNames[] 'found'
+              waitforcontext 'found' 1 5000
+              pause 1000
+            endif
+          endfor
+        endif
+      endif
+      for 0 to 'reglist'
+        if @counttype reglist[] 'any' 'backpack' > 998
+          @setalias 'unloadregs' 'bankbook'
+        endif
+      endfor
+      if @findalias 'unloadregs'
+        if @injournal 'world will save' 'system'
+          pause 30000
+          @clearjournal
+        endif
+        useobject 'bankbook'
+        waitforgump 0x554b87f3 5000
+        replygump 0x554b87f3 5
+        pause 4000
+        msg 'bank'
+        pause 2000
+        for 0 to 'reglist'
+          while @findtype reglist[] 'any' 'backpack'
+            moveitem 'found' 'reg storage'
+            pause 1000
+          endwhile
+        endfor
+        while mana < 20
+        endwhile
+        if @injournal 'world will save' 'system'
+          pause 30000
+          @clearjournal
+        endif
+        useobject 'regbook2'
+        waitforgump 0x554b87f3 5000
+        sysmsg 'Book2' 33
+        sysmsg 'Runes2[]' 33
+        replygump 0x554b87f3 Runes2[]
+        pause 4000
+        @unsetalias 'unloadregs'
+      else
+        ignoreobject 'found'
+      endif
+    endwhile
+  endfor
+endfor
+//This must be at the end
+if @injournal 'world will save' 'system'
+  pause 30000
+  @clearjournal
+endif
+useobject 'bankbook'
+waitforgump 0x554b87f3 5000
+replygump 0x554b87f3 5
+pause 4000
+msg 'bank'
+pause 2000
+for 0 to 'reglist'
+  while @findtype reglist[] 'any' 'backpack'
+    moveitem 'found' 'reg storage'
+    pause 1000
+  endwhile
+endfor
+while timer 'hourloop' < 3720000
+endwhile
