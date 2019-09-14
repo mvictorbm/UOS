@@ -1,0 +1,82 @@
+if not listexists 'directions'
+  createlist 'directions'
+  pushlist! 'directions' 'north'
+  pushlist! 'directions' 'south'
+  pushlist! 'directions' 'east'
+  pushlist! 'directions' 'west'
+  pushlist! 'directions' 'northeast'
+  pushlist! 'directions' 'northwest'
+  pushlist! 'directions' 'southeast'
+  pushlist! 'directions' 'southwest'
+endif
+if not listexists 'oretypes'
+  createlist 'oretypes'
+  pushlist 'oretypes' 0x19b9
+  pushlist 'oretypes' 0x19b8
+  pushlist 'oretypes' 0x19ba
+  pushlist 'oretypes' 0x19b7
+endif
+for 0 to oretypes
+  if @findtype oretypes[] 'any' 'backpack' 5
+    moveitemoffset 'found' 'ground' 0 1 0
+    pause 600
+  endif
+endfor
+if not listexists 'miningerrormessages'
+  createlist 'miningerrormessages'
+  pushlist 'miningerrormessages' 'no metal here'
+  pushlist 'miningerrormessages' "You can't mine there"
+  pushlist 'miningerrormessages' "Target can't be seen"
+  pushlist 'miningerrormessages' "You can't mine that"
+endif
+if @findtype 0xf39 'any' 'backpack' or @findtype 0xf39 'any' 'backpack'
+  useobject 'found'
+else
+  sysmsg "You do not have any digging tools!"
+  stop
+endif
+waitfortarget 500
+if direction == 0
+  targettileoffset 0 -1 0
+elseif direction == 1
+  targettileoffset 1 -1 0
+elseif direction == 2
+  targettileoffset 1 0 0
+elseif direction == 3
+  targettileoffset 1 1 0
+elseif direction == 4
+  targettileoffset 0 1 0
+elseif direction == 5
+  targettileoffset -1 1 0
+elseif direction == 6
+  targettileoffset -1 0 0
+elseif direction == 7
+  targettileoffset -1 -1 0
+endif
+pause 200
+for 0 to miningerrormessages
+  if @injournal miningerrormessages[] 'system'
+    @clearjournal
+    sysmsg 'Error msg detected' 16
+    if list 'directions' != 0
+      sysmsg 'Turning' 16
+      turn directions[0]
+      poplist 'directions' 'front'
+    else
+      sysmsg 'Walking' 16
+      walk 'north'
+      pause 50
+      walk 'north'
+      pause 50
+      walk 'north'
+      pushlist! 'directions' 'north'
+      pushlist! 'directions' 'south'
+      pushlist! 'directions' 'east'
+      pushlist! 'directions' 'west'
+      pushlist! 'directions' 'northeast'
+      pushlist! 'directions' 'northwest'
+      pushlist! 'directions' 'southeast'
+      pushlist! 'directions' 'southwest'
+    endif
+  endif
+endfor
