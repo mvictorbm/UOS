@@ -44,7 +44,7 @@ if timer 't_honor' > 30000
     @settimer 'nocast' 0
   endif
 endif
-if not buffexists 'enemy of one' and findalias 'enemymiasma'
+if not buffexists 'enemy of one' and @findalias 'enemymiasma'
   cast 'enemy of one'
 endif
 if not buffexists 'confidence' and hits < maxhits
@@ -54,10 +54,12 @@ endif
 //Run towards miasma
 //In order to walk type in game: -setalias walk self
 //To stop walking type in game: -unsetalias walk
-if @findalias 'walk' and timer 't_honor' < 2000
-  if not @inrange 'enemy' 1 and @findalias 'enemymiasma'
+if @findalias 'walk' and timer 't_honor' < 5000
+  while not @inrange 'enemy' 1 and @findalias 'enemymiasma'
     if dead
       stop
+    elseif dead 'enemy'
+      break
     elseif @x 'enemy' > x 'self' and @y 'enemy' > y 'self'
       run 'southeast'
     elseif @x 'enemy' < x 'self' and @y 'enemy' > y 'self'
@@ -75,7 +77,7 @@ if @findalias 'walk' and timer 't_honor' < 2000
     elseif @x 'enemy' == x 'self' and @y 'enemy' < y 'self'
       run 'north'
     endif
-  endif
+  endwhile
 endif
 //// ** Main Loop ** ////
 while @inrange 'enemy' 1 and not dead 'enemy'
