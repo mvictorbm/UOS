@@ -1,5 +1,6 @@
 //Miasma Bot (Whammy)
 //Author: Llama Vortex
+//Features: rapid honor | will only persue miasma, but will defend against other mobs
 //// ** SETUP ** ////
 //Timers
 if not timerexists 't_honor'
@@ -52,8 +53,8 @@ if not buffexists 'confidence' and hits < maxhits
   pause 500
 endif
 //Run towards miasma
-//In order to walk type in game: -setalias walk self
-//To stop walking type in game: -unsetalias walk
+//In order to persue type in game: -setalias walk self
+//To stop persuing type in game: -unsetalias walk
 if @findalias 'walk' and timer 't_honor' < 5000
   while not @inrange 'enemy' 1 and @findalias 'enemymiasma'
     if dead
