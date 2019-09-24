@@ -12,14 +12,6 @@ endif
 if not @findalias 'mount'
   @setalias 'mount' 0x3ef74
 endif
-//Logout if dead
-if dead 'self'
-  if @inrange 'mount' 5
-    logoutbutton
-  else
-    stop
-  endif
-endif
 //// ** Outside of loop routine ** ////
 if @findtype 0x30 2301 'ground'
   target! 'found'
