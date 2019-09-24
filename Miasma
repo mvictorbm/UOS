@@ -28,15 +28,15 @@ else
   endif
 endif
 if @poisoned 'self' and diffhits > 30
-  if targetexists
-    canceltarget
+  if mana > 10
+    if targetexists
+      canceltarget
+    endif
+    chivalryheal 'self'
+    pause 2000
   endif
-  chivalryheal 'self'
-  pause 2000
-else
-  if not targetexists and timer 't_honor' > 10000
-    virtue 'honor'
-  endif
+elseif not targetexists and timer 't_honor' > 10000
+  virtue 'honor'
 endif
 if timer 't_honor' > 30000
   if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
