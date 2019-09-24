@@ -1,4 +1,6 @@
-///////////////////////////// SETUP ///////////////////////////////////////
+//Miasma Bot (Whammy)
+//Author: Llama Vortex
+//// ** SETUP ** ////
 //Timers
 if not timerexists 't_honor'
   createtimer 't_honor'
@@ -18,12 +20,14 @@ if dead 'self'
     stop
   endif
 endif
+//// ** Outside of loop routine ** ////
 if @findtype 0x30 2301 'ground'
+  target! 'found'
   @setalias 'enemy' 'found'
+  @setalias 'enemymiasma' 'self'
   headmsg '[ENEMY]' 16 'enemy'
-  target! 'enemy'
   settimer 't_honor' 0
-  setalias 'enemymiasma' 'self'
+  attack 'enemy'
 else
   @getenemy 'gray' 'criminal' 'closest'
   @unsetalias 'enemymiasma'
@@ -31,30 +35,35 @@ else
     @unsetalias 'enemy'
   endif
 endif
-if @poisoned 'self' or diffhits > 30
+if @poisoned 'self' and diffhits > 30
   if targetexists
     canceltarget
   endif
   chivalryheal 'self'
-  pause 4000
+  pause 2000
 else
   if not targetexists and timer 't_honor' > 10000
     virtue 'honor'
   endif
-  if timer 't_honor' > 20000
-    if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
-      cast 'curse Weapon'
-      @settimer 'nocast' 0
-    endif
-  endif
-  if not buffexists 'enemy of one' and findalias 'enemymiasma'
-    cast 'enemy of one'
+endif
+if timer 't_honor' > 30000
+  if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
+    cast 'curse Weapon'
+    @settimer 'nocast' 0
   endif
 endif
-////////////////////// END OF SETUP ///////////////////////////////////////
-//Main loop
-while @inrange 'enemy' 15
-  if not @inrange 'enemy' 1 and @findalias 'walk'
+if not buffexists 'enemy of one' and findalias 'enemymiasma'
+  cast 'enemy of one'
+endif
+if not buffexists 'confidence' and hits < maxhits
+  cast 'confidence'
+  pause 500
+endif
+//Run towards miasma
+//In order to walk type in game: -setalias walk self
+//To stop walking type in game: -unsetalias walk
+if @findalias 'walk' and timer 't_honor' < 2000
+  if not @inrange 'enemy' 1 and @findalias 'enemymiasma'
     if dead
       stop
     elseif @x 'enemy' > x 'self' and @y 'enemy' > y 'self'
@@ -75,12 +84,14 @@ while @inrange 'enemy' 15
       run 'north'
     endif
   endif
-  settimer 't_honor' 0
+endif
+//// ** Main Loop ** ////
+while @inrange 'enemy' 1 and not dead 'enemy'
   attack 'enemy'
-  if mana > 20
-    @setability 'secondary' 'on'
-  elseif not buffexists 'lightning strike'
+  if mana < 20
     cast 'lightning strike'
+  else
+    @setability 'secondary' 'on'
   endif
   //Send money
   if @findtype 0xe76 'any' 'backpack' 1 0
@@ -103,7 +114,7 @@ while @inrange 'enemy' 15
     if diffhits > 10
       if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
         cast 'curse Weapon'
-        @settimer 'nocast' 1500
+        @settimer 'nocast' 1800
       endif
     elseif not buffexists 'Consecrate Weapon' and mana 'self' >= 15
       @cast 'consecrate weapon'
@@ -118,5 +129,6 @@ while @inrange 'enemy' 15
     if not buffexists 'enemy of one' and findalias 'enemymiasma'
       cast 'enemy of one'
     endif
+    settimer 't_honor' 0
   endif
 endwhile
