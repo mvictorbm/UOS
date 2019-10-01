@@ -1,6 +1,6 @@
-//Named Monsters Bot (Sampire)
+//Miasma Bot (Sampire)
 //Author: Llama Vortex
-//Features: rapid honor | will only persue the named, but will defend against other mobs
+//Features: rapid honor | will only persue miasma, but will defend against other mobs
 //// ** SETUP ** ////
 //Timers
 if not timerexists 't_honor'
@@ -23,7 +23,7 @@ if dead 'self' and @inrange 'mount' 5
 endif
 //// ** Outside of loop routine ** ////
 //Coil: 0x5c 63 | Miasma: 0x30 2301
-if @findtype 0x30 2301 'ground' 1 10
+if @findtype 0x5c 63 'ground' 1 10
   target! 'found'
   @setalias 'enemy' 'found'
   @setalias 'specialenemy' 'self'
@@ -51,7 +51,7 @@ endif
 if not buffexists 'enemy of one' and @findalias 'specialenemy'
   cast 'enemy of one'
 endif
-if hits < maxhits and timer 'nocast' > 2000
+if diffhits > 10 and timer 'nocast' > 4000
   cast 'confidence'
   settimer 'nocast' 0
 endif
@@ -102,11 +102,12 @@ while @inrange 'enemy' 1 and not dead 'enemy'
   //endif
   @clearjournal
   @setability 'primary' 'on'
-  if @injournal 'You must have' 'system'
+  pause 300
+  if @injournal 'You must have' 'system' or @injournal 'You need' 'system'
     cast 'lightning strike'
     @clearjournal
-    pause 500
-  endif  
+    pause 300
+  endif
   //Mount
   if not @findalias 'mount'
     @setalias 'mount' 0x3ef74
