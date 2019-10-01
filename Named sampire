@@ -1,6 +1,6 @@
 //Miasma Bot (Sampire)
 //Author: Llama Vortex
-//Features: rapid honor | will only persue miasma, but will defend against other mobs
+//Features: rapid honor | will only persue the named, but will defend against other mobs
 //// ** SETUP ** ////
 //Timers
 if not timerexists 't_honor'
@@ -23,7 +23,7 @@ if dead 'self' and @inrange 'mount' 5
 endif
 //// ** Outside of loop routine ** ////
 //Coil: 0x5c 63 | Miasma: 0x30 2301
-if @findtype 0x5c 63 'ground' 1 10
+if @findtype 0x30 2301 'ground' 1 12
   target! 'found'
   @setalias 'enemy' 'found'
   @setalias 'specialenemy' 'self'
