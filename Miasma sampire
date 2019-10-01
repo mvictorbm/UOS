@@ -1,0 +1,156 @@
+//Miasma Bot (Sampire)
+//Author: Llama Vortex
+//Features: rapid honor | will only persue miasma, but will defend against other mobs
+//// ** SETUP ** ////
+//Timers
+if not timerexists 't_honor'
+  @createtimer 't_honor'
+  @settimer 't_honor' 20000
+endif
+if not timerexists 'nocast'
+  @createtimer 'nocast'
+  @settimer 'nocast' 2000
+endif
+//Mount
+if not @findalias 'mount'
+  @setalias 'mount' 0x3ef74
+elseif not mounted 'self' and not buffexists 'dismount'
+  useobject! 'mount'
+  pause 500
+endif
+if dead 'self' and @inrange 'mount' 5
+  logoutbutton
+endif
+//// ** Outside of loop routine ** ////
+//Coil: 0x5c 63; Miasma: 0x30 2301
+if @findtype 0x30 2301 'ground' 1 10
+  target! 'found'
+  @setalias 'enemy' 'found'
+  @setalias 'specialenemy' 'self'
+  headmsg '[ENEMY]' 16 'enemy'
+  settimer 't_honor' 0
+  attack 'enemy'
+else
+  @getenemy 'gray' 'criminal' 'closest'
+  @unsetalias 'specialenemy'
+  if not @inrange 'enemy' 1
+    @unsetalias 'enemy'
+  endif
+endif
+if @poisoned 'self' and diffhits > 50
+  if mana > 10
+    if targetexists
+      canceltarget
+    endif
+    chivalryheal 'self'
+    pause 2000
+  endif
+elseif not targetexists and timer 't_honor' > 10000
+  virtue 'honor'
+endif
+if not buffexists 'enemy of one' and @findalias 'specialenemy'
+  cast 'enemy of one'
+endif
+if hits < maxhits and timer 'nocast' > 2000
+  cast 'confidence'
+  settimer 'nocast' 0
+endif
+if hits > 80 and stam < 100
+  if mana 'self' >= 12
+    @cast "Divine Fury"
+    @settimer 'nocast' 0
+  endif
+endif
+//Run towards miasma
+//In order to persue type in game: -setalias walk self
+//To stop persuing type in game: -unsetalias walk
+if @findalias 'walk' and timer 't_honor' < 5000
+  while not @inrange 'enemy' 1 and @findalias 'specialenemy'
+    if dead
+      stop
+    elseif dead 'enemy'
+      break
+    elseif not @inrange 'enemy' 15
+      break
+    elseif @x 'enemy' > x 'self' and @y 'enemy' > y 'self'
+      run 'southeast'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' > y 'self'
+      run 'southwest'
+    elseif @x 'enemy' > x 'self' and @y 'enemy' < y 'self'
+      run 'northeast'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' < y 'self'
+      run 'northwest'
+    elseif @x 'enemy' > x 'self' and @y 'enemy' == y 'self'
+      run 'east'
+    elseif @x 'enemy' < x 'self' and @y 'enemy' == y 'self'
+      run 'west'
+    elseif @x 'enemy' == x 'self' and @y 'enemy' > y 'self'
+      run 'south'
+    elseif @x 'enemy' == x 'self' and @y 'enemy' < y 'self'
+      run 'north'
+    endif
+  endwhile
+endif
+//// ** Main Loop ** ////
+while @inrange 'enemy' 1 and not dead 'enemy'
+  attack 'enemy'
+  //if mana < 20
+  //  cast 'lightning strike'
+  //  pause 500
+  //else
+  //  @setability 'primary' 'on'
+  //endif
+  @clearjournal
+  @setability 'primary' 'on'
+  if @injournal 'You must have' 'system'
+    cast 'lightning strike'
+    @clearjournal
+    pause 500
+  endif  
+  //Mount
+  if not @findalias 'mount'
+    @setalias 'mount' 0x3ef74
+  elseif not mounted 'self' and not buffexists 'dismount'
+    useobject! 'mount'
+    pause 500
+  endif
+  if dead 'self' and @inrange 'mount' 5
+    logoutbutton
+  endif
+  //Send money
+  if @findtype 0xe76 'any' 'backpack' 1 0
+    waitforproperties 'found' 1000
+    if @property 'Charges' 'found' <= 5
+      //headmsg '# Atenção - Bag of Sending #' 63
+    elseif @property 'Charges' 'found' == 0
+      headmsg '# Bag of Sending charges: 0 #' 63
+    endif
+    if diffweight < 30
+      if usetype! 0xe76
+        waitfortarget 1000
+        targettype! 0xeed
+        pause 500
+      endif
+    endif
+  endif
+  //Cast spells
+  if timer 'nocast' > 2000 and @inrange 'enemy' 10
+    if not buffexists 'Consecrate Weapon'
+      @cast 'consecrate weapon'
+      @settimer 'nocast' 1000
+    elseif not buffexists 'confidence' and hits < maxhits
+      cast 'confidence'
+      @settimer 'nocast' 1000
+    elseif stam < 100 and mana >= 12
+      @cast "Divine Fury"
+      @settimer 'nocast' 1000
+    elseif not buffexists 'counter attack'
+      cast 'counter attack'
+      @settimer 'nocast' 1500
+    endif
+    if not buffexists 'enemy of one' and @findalias 'specialenemy'
+      cast 'enemy of one'
+    endif
+    settimer 't_honor' 0
+  endif
+endwhile
