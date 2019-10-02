@@ -51,7 +51,7 @@ endif
 if not buffexists 'enemy of one' and @findalias 'specialenemy'
   cast 'enemy of one'
 endif
-if diffhits > 10 and timer 'nocast' > 4000
+if diffhits > 20 and timer 'nocast' > 6000
   cast 'confidence'
   settimer 'nocast' 0
 endif
@@ -139,7 +139,7 @@ while @inrange 'enemy' 1 and not dead 'enemy'
     if not buffexists 'Consecrate Weapon'
       @cast 'consecrate weapon'
       @settimer 'nocast' 1000
-    elseif not buffexists 'confidence' and hits < maxhits
+    elseif not buffexists 'confidence' and diffhits > 20
       cast 'confidence'
       @settimer 'nocast' 1000
     elseif stam < 100 and mana >= 12
