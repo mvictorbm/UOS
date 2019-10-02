@@ -104,9 +104,11 @@ while @inrange 'enemy' 1 and not dead 'enemy'
   @setability 'primary' 'on'
   pause 300
   if @injournal 'You must have' 'system' or @injournal 'You need' 'system'
-    cast 'lightning strike'
-    @clearjournal
-    pause 300
+    if not buffexists 'lightning strike'
+      cast 'lightning strike'
+      @clearjournal
+      pause 300
+    endif
   endif
   //Mount
   if not @findalias 'mount'
