@@ -4,6 +4,7 @@
 if not listexists 'props_found'
   createlist 'props_found'
 endif
+// ** You need to setup the kind of runic tool you are using **
 if not listexists 'runic'
   @createlist 'runic'
   //runic type
@@ -11,15 +12,19 @@ if not listexists 'runic'
   //runic color
   @pushlist 'runic' 2213
 endif
+// ** You need to setup the kind of item you are crafting**
 if not listexists 'make_type'
   @createlist 'make_type'
   //item that you are currently making type
   @pushlist 'make_type' 0x1405
 endif
+// ** The destination of the items that don't match the criteria (don't need to be an actual trash barrel)**
 if not @findalias 'trash'
-  findtype 0xe77 946 'ground'
-  setalias 'trash' 'found'
+  promptalias 'trash'
+  while targetexists 'trash'
+  endwhile
 endif
+// ** The destination of the items that match the criteria **
 while not @findalias 'destbag'
   sysmsg 'Select a bag to destinate decent items' 45
   promptalias 'destbag'
@@ -27,15 +32,17 @@ while not @findalias 'destbag'
   endwhile
 endwhile
 //craft
-if @findtype runic[0] runic[1] 'backpack'
-  if not gumpexists '0x38920abd'
-    useobject! 'found'
-    waitforgump 0x38920abd 2500
-  else
-    replygump 0x38920abd 21
-    waitforgump 0x38920abd 2500
+for 10
+  if @findtype runic[0] runic[1] 'backpack'
+    if not gumpexists '0x38920abd'
+      useobject! 'found'
+      waitforgump 0x38920abd 2500
+    else
+      replygump 0x38920abd 21
+      waitforgump 0x38920abd 2500
+    endif
   endif
-endif
+endfor
 while @findtype make_type[0] 'any' 'backpack'
   if not listexists 'props' or list 'props' == 0
     @createlist 'props'
@@ -65,7 +72,7 @@ while @findtype make_type[0] 'any' 'backpack'
     @pushlist 'intensity' 15
     @pushlist 'intensity' -2
     @pushlist 'intensity' 0
-	  @pushlist 'intensity' -22
+    @pushlist 'intensity' -22
   endif
   waitforproperties 'found' 15000
   while list 'props' != 0
@@ -81,13 +88,13 @@ while @findtype make_type[0] 'any' 'backpack'
     ignoreobject 'found'
     pause 1000
   else
-    //smelt
+    //Remove the comments if you want to smelt the unwanted items
     //replygump 0x38920abd 14
     //waitfortarget 500
     //target! 'found'
     //waitforgump 0x38920abd 2500
-	  //move to trash
-	  moveitem 'found' 'trash'
+    //Move to trash (comment this if you are using the smelting option)
+    moveitem 'found' 'trash'
     ignoreobject 'found'
   endif
   @clearlist 'props_found'
