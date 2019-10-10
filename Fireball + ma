@@ -1,0 +1,35 @@
+//Ma Fb - Protótipo. Cast novo
+if not timerexists 'wait_target'
+  createtimer 'wait_target'
+endif
+if not timerexists 'aft_target'
+  createtimer 'aft_target'
+endif
+if @inrange 'enemy' 10
+  if timer 'aft_target' < 150
+    //sysmsg 'Overcasting' 220
+  elseif targetexists 'harmful'
+    target! 'enemy'
+    // Harm if enemy is standing next to you
+  else
+    // Handle sequence, using alias trick
+    @clearjournal
+    if not @findalias 'Sequencing' and timer 'wait_target' < 2000
+      cast 'Magic Arrow' 'enemy'
+      settimer 'wait_target' 2000
+      setalias 'sequencing' 'self'
+    else
+      cast 'Fireball' 'enemy'
+      settimer 'wait_target' 0
+      @unsetalias 'sequencing'
+    endif
+  endif
+  while waitingfortarget 'server'
+    settimer 'aft_target' 0
+    if @injournal 'disturbed' 'system'
+      @clearjournal
+      @unsetalias 'sequencing'
+      break
+    endif
+  endwhile
+endif
