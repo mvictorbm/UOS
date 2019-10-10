@@ -1,0 +1,25 @@
+if not timerexists 'wait_target'
+  createtimer 'wait_target'
+endif
+if not timerexists 'aft_target'
+  createtimer 'aft_target'
+  settimer 'aft_target' 200
+endif
+if paralyzed 'self' and hits 'self' > 50
+  @useonce 0xe79
+elseif yellowhits 'self' and hits < 30
+  usetype! 0x2fd8 1160
+else
+  if timer 'aft_target' < 150
+  else
+    miniheal 'self'
+  endif
+endif
+while waitingfortarget 'server'
+  settimer 'aft_target' 0
+  if @injournal 'disturbed' 'system'
+    @clearjournal
+    @unsetalias 'sequencing'
+    break
+  endif
+endwhile
