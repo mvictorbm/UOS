@@ -4,10 +4,14 @@ from stealth import *
 webhook = DiscordWebhook(url='https://discordapp.com/api/webhooks/517053847345299456/VxsmCNyB93IW4FnuWx_b08lVy6iJE3GFWcBObT2vJ3mshhniAU_y2x7BnNb9x_mLL9Bo', content='@everyone Inquisitors Nasceu!!!!')
 
 while True:
+    while not Connected():
+        AddToSystemJournal('reconnect')                  
+        Connect()
+        Wait(60000)
     SetFindVertical(100)
     SetFindDistance(20)
     GetFindVertical()
     GetFindDistance()
     if FindTypeEx(0x1414, 0x04F2, Ground()):
         webhook.execute()
-        Wait(5000)
+        Wait(5000) 
