@@ -1,0 +1,169 @@
+#O que falta:
+#-> Fazer o script postar todo boss no discord
+#-> Contar flechas, bandagens
+#-> Monitorar durabilidade
+#-> Rotina de aceitar ress após morrer
+#-> Rotina de aceitar trades de flechas e bandagens
+#-> Será que a verificação de GumpAFK está funcionando?
+
+from discord_webhook import DiscordWebhook
+from stealth import *
+from datetime import *
+
+def msg_disco(msg):
+    webhook = DiscordWebhook(url='https://discordapp.com/api/webhooks/636933988635639808/pDeTx5Yyue9mg8_Y3xq-mHgtPO4vq8V6v9ssz8i9oDbCHSP6rMKrElzqBbvq-5ctCZ3T', content=str(msg))
+    webhook.execute()
+    return
+    
+def find_boss(range=18):
+    names_humans = ['Gravedigger','Jack The Ripper','The Gravedigger','Headless Horseman','A Costumed Orc Champion','Freddy Krueger']
+    names_monsters = ['Araneam','Britomartis','A Steaming Heap','Peinsluth','Pumpkin Lord','Mr. Hyde','Wraith High Priest','The Guardian','Clawser Jr','Clawser','A Noxious Gas Cloud']
+    types_humans = [0x190, 0x191]
+    types_monsters = [0x2df, 0x29b, 0x2d5, 0xf, 0x53, 0x10b, 0x33e, 0x13e, 0x1e, 0x49, 0x111]
+    
+    SetFindDistance(range)
+    GetFindDistance()
+    
+    for type in types_humans:
+        while FindType(type, Ground()) > 0:
+            for name in names_humans:
+                if GetName(FindItem()) == name:
+                    msg_disco('Boss Found: ' + GetName(FindItem()))
+                    Attack(FindItem())
+                    return FindItem()
+                else:
+                    Ignore(FindItem())
+    
+    for type in types_monsters:
+        while FindType(type, Ground()) > 0:
+            for name in names_monsters:
+                if GetName(FindItem()) == name:
+                    msg_disco('Boss Found: ' + GetName(FindItem())) 
+                    Attack(FindItem())
+                    return FindItem()
+                else:
+                    Ignore(FindItem())
+    
+    return False
+    
+def check_buff(buff):
+    if '\'Attribute_ID\': {}'.format(buff) in str(GetBuffBarInfo()):
+        return True
+    return False
+        
+def survive():
+    if GetHP(Self()) < GetMaxHP(Self()) - 20 or IsPoisoned(Self()):
+        if not check_buff('1069'):
+            WaitTargetObject(Self())
+            UseType(0xe21, 0x0000)
+            Wait(2000)
+   
+    if GetStam(Self()) < 110:
+        Cast('Divine Fury')
+        Wait(2000)
+    
+    if not check_buff('1012'):
+        UseSkill('Hiding')
+        Wait(1000)
+        
+    return
+    
+def attack_boss(bossID):
+    UsePrimaryAbility()
+    Attack(bossID) 
+    Wait(250)
+    
+    if not check_buff('1082'):
+        Cast('Consecrate Weapon')
+        Wait(500)
+
+    if not check_buff('1010'):
+        Cast('Divine Fury')
+        Wait(500)
+
+    if not check_buff('1011'):
+        Cast('Enemy of One')
+        Wait(500)
+            
+    return
+        
+def check_arty():
+    arties = [0x1f03,0x2f58,0x1087]
+    for i in arties:
+        while FindType(i, Backpack()):
+            if 'Conjurer' in GetTooltip(FindItem()) and 'Insured' not in GetTooltip(FindItem()) and 'Blessed' not in GetTooltip(FindItem()):
+                #checar se realmente começa com 0
+                RequestContextMenu(Self())
+                SetContextMenuHook(Self(), 3)
+                Wait(500)
+                if TargetPresent():
+                    TargetToObject(FindItem())
+                    Wait(2000)
+                    msg = '@here ' + CharName() + ' received an arty'
+                    msg_disco(msg)
+            else:
+                Ignore(FindItem())
+    return
+                
+### Main loop ###
+t_bossup = datetime.now()
+t_aviso = datetime.now()
+IgnoreReset()
+
+while True:
+    while not Connected():
+        AddToSystemJournal('Reconnect')                  
+        Connect()
+        Wait(10000)
+        
+    if CharName() == 'Cagueta':
+        if InJournalBetweenTimes('Clawser is up', t_bossup, datetime.now()) > 0:
+            Disconnect()
+            while Connected():
+                pass
+            else:
+                if ChangeProfileEx('ClawserBot01', 'Demise - AOS', 'Jupiter') == 0:
+                    Connect()
+                    while not Connected():
+                        pass
+            t_bossup = datetime.now() + timedelta(minutes=110)
+    else:
+        AddToSystemJournal('Trying to find boss')
+        boss = find_boss()
+        if boss != False:
+            AddToSystemJournal('BossID: '+str(boss))
+            while IsObjectExists(boss):
+                Attack(boss)
+                attack_boss(boss)
+                survive()
+                if Dead():
+                    msg = '@here ' + CharName() + ' is dead'
+                    msg_disco(msg)
+                    exit()
+        else:
+            survive()
+            check_arty()
+            if Dead():
+                msg = '@here ' + CharName() + ' is dead'
+                msg_disco(msg)
+                exit()
+                
+            if GetGumpsCount() > 0:
+                if GetGumpID(GetGumpsCount()-1) == 0xc37345f3 and datetime.now() > t_aviso:
+                    t_aviso = datetime.now() + timedelta(seconds=5)
+                    msg = '@here ' + CharName() + ' is being AFK checked!!'
+                    msg_disco(msg)
+            
+            #Logout if hidden
+            if check_buff('1012'):
+                Disconnect()
+                while Connected():
+                    pass
+                else:
+                    AddToSystemJournal('Waiting 5 minutes')
+                    Wait(330000)
+                    if ChangeProfileEx('ClawserBot01', 'Demise - AOS', 'Cagueta') == 0:
+                        Connect()
+                        while not Connected():
+                            pass
+            
