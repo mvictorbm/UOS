@@ -1,0 +1,84 @@
+//Author: Llama Vortex
+//Make last potion
+//Remove the comment for the reagent you want to use
+@removelist 'regs'
+@removelist 'pots'
+if not @listexists 'regs'
+  createlist 'regs'
+  //Gravedust - Conflag
+  @pushlist! 'regs' 0xf8f
+  //Black Pearl - Refresh
+  //@pushlist! 'regs' 0xf7a
+  //Blood Moss - Agility
+  //@pushlist! 'regs' 0xf7b
+  //Mandrake Roots - Strength
+  //@pushlist! 'regs' 0xf86
+  //Gingseng - Greater Heal
+  //@pushlist! 'regs' 0xf85
+  //Garlic - Cure
+  //@pushlist! 'regs' 0xf84
+  //Sulf. Ash - Explosion
+  //@pushlist! 'regs' 0xf8c
+endif
+if not @listexists 'pots'
+  createlist 'pots'
+  pushlist! 'pots' 0xf06
+  pushlist! 'pots' 0xf0b
+  pushlist! 'pots' 0xf08
+  pushlist! 'pots' 0xf09
+  pushlist! 'pots' 0xf0c
+  pushlist! 'pots'  0xf07
+  pushlist! 'pots' 0xf0d
+endif
+while not @findobject 'restock'
+  headmsg 'Select the restock chest' 45 'self'
+  promptalias 'restock'
+  while targetexists 'system'
+  endwhile
+endwhile
+while not dead 'self'
+  if @ingump 0x38920abd 'empty bottle'
+    if @findtype 0xf0e 0 'restock'
+      moveitem 'found' 'backpack' 0 0 0 100
+      pause 650
+    else
+      headmsg 'Not enough bottles in restock' 45 'self'
+      stop
+    endif
+  endif
+  if @ingump 0x38920abd 'have the resources'
+    if @findtype regs[0] 0 'restock'
+      moveitem 'found' 'backpack' 0 0 0 1000
+      pause 650
+    else
+      headmsg 'Not enough reagents in restock' 45 'self'
+      stop
+    endif
+  endif
+  if @findtype 0xe9b 0 'backpack'
+    useobject 'found'
+  else
+    if @findtype 0xe9b 0 'restock'
+      for 5
+        moveitem 'found' 'backpack'
+        pause 650
+      endfor
+      replay
+    else
+      headmsg 'Not enough mortar&pestle in restock' 45 'self'
+      stop
+    endif
+  endif
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 1
+  waitforgump 0x38920abd 3000
+  replygump 0x38920abd 21
+  pause 500
+  for 0 to pots
+    if @findtype pots[] 'any' 'backpack'
+      moveitem 'found' 'restock'
+      pause 650
+    endif
+  endfor
+  waitforgump 0x38920abd 3000
+endwhile
