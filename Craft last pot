@@ -35,6 +35,8 @@ while not @findobject 'restock'
   promptalias 'restock'
   while targetexists 'system'
   endwhile
+  useobject! 'restock'
+  pause 650
 endwhile
 while not dead 'self'
   if @ingump 0x38920abd 'empty bottle'
