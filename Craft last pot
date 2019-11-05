@@ -60,6 +60,7 @@ while not dead 'self'
   else
     if @findtype 0xe9b 0 'restock'
       for 5
+        @findtype 0xe9b 0 'restock'
         moveitem 'found' 'backpack'
         pause 650
       endfor
