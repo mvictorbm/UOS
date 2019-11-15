@@ -1,0 +1,24 @@
+if not listexists 'jewelry'
+  @createlist 'jewelry'
+  @pushlist 'jewelry' 0x108a
+  @pushlist 'jewelry' 0x1f09
+  @pushlist 'jewelry' 0x1086
+  @pushlist 'jewelry' 0x1f06
+endif
+for 0 to 'jewelry'
+    canceltarget
+    while @findtype jewelry[] 'any' 'backpack'
+      waitforproperties 'found' 1500
+      while not @property 'insured' 'found'
+        if targetexists 'any'
+          canceltarget
+        endif
+        waitforcontext 'self' 3 1500
+        waitfortarget 1500
+        target! 'found'
+        playsound 'firework.wav'
+        pause 1000
+      endwhile
+      ignoreobject! 'found'
+    endwhile
+endfor
