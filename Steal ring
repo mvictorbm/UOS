@@ -1,0 +1,170 @@
+sysmsg 'Ring thief by Llama' 16
+@unsetalias 'targetplayer'
+@unsetalias 'targetbag'
+@clearlist 'tosteal'
+@clearignorelist
+@ignoreobject 'self'
+if not timerexists 't_skill'
+  settimer 't_skill' 11000
+endif
+if @findlayer 'self' 1  or @findlayer 'self' 2
+  clearhands 'both'
+  pause 1200
+endif
+if not hidden 'self' and timer 't_skill' >= 11000
+  useskill 'hiding'
+  settimer 't_skill' 0
+  pause 100
+endif
+if not hits == maxhits or poisoned 'self'
+  bigheal 'self'
+  playsound 'alarm.wav'
+  while waitingfortarget 'server'
+  endwhile
+endif
+if not listexists 'props_found'
+  createlist 'props_found'
+endif
+if not listexists 'jewelry'
+  @createlist 'jewelry'
+  @pushlist 'jewelry' 0x108a
+  @pushlist 'jewelry' 0x1f09
+  @pushlist 'jewelry' 0x1086
+  @pushlist 'jewelry' 0x1f06
+endif
+if not @inrange 'targetplayer' 2
+  promptalias 'targetplayer'
+  sysmsg "Select the target player" 53
+  while targetexists 'system'
+  endwhile
+  headmsg 'I am the target' 16 'targetplayer'
+  if not @findobject 'targetbag'
+    if @findlayer 'targetplayer' 21
+      useobject! 'found'
+      pause 600
+    endif
+    sysmsg "Select the target bag, ESC to make it target's backpack" 53
+    promptalias 'targetbag'
+    while targetexists 'system'
+    endwhile
+    pause 300
+    if not @findalias 'targetbag'
+      @setalias 'targetbag' 'found'
+      sysmsg 'Target bag is set' 53
+    endif
+    headmsg 'Target bag is set' 53
+  endif
+endif
+while not dead 'self'
+  if not hidden 'self'
+    cast 'invisibility' 'self'
+    pause 2000
+  endif
+  if not buffexists 'hidden' and timer 't_skill' >= 11000
+    useskill 'hiding'
+    settimer 't_skill' 0
+    pause 100
+  endif
+  for 0 to 'jewelry'
+    while @findtype jewelry[] 0 'targetbag'
+      if not listexists 'ring_props' or list 'ring_props' == 0
+        @createlist 'ring_props'
+        @pushlist! 'ring_props' 'faster casting recovery'
+        @pushlist! 'ring_props' 'faster casting'
+        @pushlist! 'ring_props' 'enhance potions'
+        @pushlist! 'ring_props' 'hit chance increase'
+        @pushlist! 'ring_props' 'defense chance increase'
+        @pushlist! 'ring_props' 'physical resist'
+        @pushlist! 'ring_props' 'fire resist'
+        @pushlist! 'ring_props' 'cold resist'
+        @pushlist! 'ring_props' 'poison resist'
+        @pushlist! 'ring_props' 'energy resist'
+        @pushlist! 'ring_props' 'damage increase'
+        @pushlist! 'ring_props' 'spell damage increase'
+        @pushlist! 'ring_props' 'Strenght bonus'
+        @pushlist! 'ring_props' 'Dexterity bonus'
+        @pushlist! 'ring_props' 'intelligence bonus'
+        @pushlist! 'ring_props' 'parrying'
+        @pushlist! 'ring_props' 'fencing'
+        @pushlist! 'ring_props' 'swordsmanship'
+        @pushlist! 'ring_props' 'archery'
+        @pushlist! 'ring_props' 'mace fighting'
+        @pushlist! 'ring_props' 'magery'
+        @pushlist! 'ring_props' 'evaluating intelligence'
+        @pushlist! 'ring_props' 'spirit speak'
+        @pushlist! 'ring_props' 'necromancy'
+        @pushlist! 'ring_props' 'ninjitsu'
+        @pushlist! 'ring_props' 'bushido'
+        @pushlist! 'ring_props' 'chivalry'
+      endif
+      if not listexists 'ring_intens' or list 'ring_intens' == 0
+        @createlist 'ring_intens'
+        @pushlist 'ring_intens' 1
+        @pushlist 'ring_intens' 1
+        @pushlist 'ring_intens' 15
+        @pushlist 'ring_intens' 9
+        @pushlist 'ring_intens' 9
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 5
+        @pushlist 'ring_intens' 4
+        @pushlist 'ring_intens' 4
+        @pushlist 'ring_intens' 4
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+        @pushlist 'ring_intens' 10
+      endif
+      waitforproperties 'found' 15000
+      while list 'ring_props' != 0
+        if @property ring_props[0] 'found' >= ring_intens[0]
+          pushlist 'props_found' 'props'
+        endif
+        @poplist 'ring_props' 'front'
+        @poplist 'ring_intens' 'front'
+      endwhile
+      if list 'props_found' >= 3
+        while timer 't_skill' < 11000
+        endwhile
+        settimer 't_skill' 0
+        useskill 'stealing'
+        waitfortarget 1000
+        target! 'found'
+        playsound 'firework.wav'
+        pause 1000
+      else
+        ignoreobject 'found'
+      endif
+      @clearlist 'props_found'
+    endwhile
+  endfor
+  //Insure stolen ring
+  //Check rings
+  for 0 to 'jewelry'
+    while @findtype jewelry[] 'any' 'backpack'
+      waitforproperties 'found' 1500
+      while not @property 'insured' 'found'
+        if targetexists 'any'
+          canceltarget
+        endif
+        waitforcontext 'self' 3 1500
+        waitfortarget 1500
+        target! 'found'
+        pause 1000
+      endwhile
+      ignoreobject! 'found'
+    endwhile
+  endfor
+endwhile
