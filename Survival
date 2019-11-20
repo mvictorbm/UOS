@@ -1,0 +1,157 @@
+sysmsg "* Survival *" 33
+// Timers
+if not timerexists 'healing'
+  createtimer 'healing'
+endif
+if not timerexists 'apple'
+  @settimer 'apple' 121250
+endif
+if not timerexists 'heal potion'
+  @settimer 'heal potion' 11250
+endif
+if not timerexists 'str pot'
+  @settimer 'str pot' 121250
+endif
+if not timerexists 'agi pot'
+  @settimer 'agi pot' 122350
+endif
+if not timerexists 'grape'
+  @settimer 'grape' 101000
+endif
+if not timerexists 'alert'
+  @settimer 'alert' 1000
+endif
+//Main loop
+while not dead 'self'
+  //Start heal 2s after mortaled
+  if yellowhits 'self' and not @timerexists 'rec mortal'
+    @settimer 'rec mortal' 0
+    @unsetalias 'bandage'
+    sysmsg 'Recently mortaled' 33
+  elseif @timerexists 'rec mortal' and @timer 'rec mortal' < 3000
+    sysmsg 'Recently mortal, waiting to bandage'
+    @unsetalias 'bandage'
+    pause 500
+  else
+    @removetimer 'rec mortal'
+    //AUTO-HEALING
+    if not buffexists 'healing' and hits < maxhits
+      @setalias 'bandage' 'self'
+      pause 600
+    endif
+    if @usequeue == 0
+      // Dump target
+      if @targetexists 'harmful'
+        @target! 'enemy'
+      elseif @targetexists 'beneficial'
+        @target! 'self'
+      elseif @targetexists 'any'
+        canceltarget
+      endif
+      if paralyzed 'enemy' and @findalias 'autoconflag'
+        headmsg '* CONFLAG *' 33 'self'
+        pause 500
+        usetype 0xf06 1161 'backpack'
+        waitfortarget 500
+        target! 'enemy'
+      endif
+      //Health is critical, priorities are changed.
+      if diffhits > 70
+        if timer 'alert' > 1000
+          sysmsg ' ** C R I T I C A L **' 33
+          settimer 'alert' 0
+        endif
+        if stam < 5
+          //msg 'refresh crit' 33
+          @usetype! 0xf0b
+          pause 600
+        elseif poisoned 'self'
+          //msg 'cure crit' 33
+          @usetype! 0xf07 0
+          pause 600
+        elseif yellowhits 'self' and timer 'apple' > 121250
+          //msg 'apple crit' 33
+          @usetype! 0x2fd8
+          @settimer 'apple' 0
+          pause 600
+        elseif not yellowhits 'self' and timer 'heal potion' >= 11250
+          //msg 'heal crit' 33
+          @usetype! 0xf0c
+          settimer 'heal potion' 0
+          pause 600
+        elseif @findalias 'bandage'
+          //msg 'bandage crit' 33
+          if @usetype! 0xe21 'any' 'backpack'
+            waitfortarget 2000
+            target! 'self'
+            @unsetalias 'bandage'
+            @settimer 'healing' 0
+            pause 600
+          endif
+        endif
+      else
+        if hits == maxhits and @findlayer 'self' 12
+          if @inrange 'enemy' 15
+            equipitem! 'found' 12
+            @setalias 'bandage' 'self'
+          endif
+        endif
+        if paralyzed 'self'
+          //Paralyzed
+          @useonce! 0xe79 'any'
+          pause 600
+        else
+          if @findalias 'bandage'
+            if poisoned or hits != maxhits
+              if @usetype! 0xe21 'any' 'backpack'
+                //msg 'bandage' 33
+                waitfortarget 2000
+                target! 'self'
+                @unsetalias 'bandage'
+                @settimer 'healing' 0
+                pause 600
+              endif
+            endif
+          elseif poisoned 'self' and diffhits >= 20
+            //msg 'cure' 33
+            @usetype! 0xf07 0
+            pause 600
+          elseif not yellowhits 'self' and diffhits > 70
+            if timer 'heal potion' >= 11250
+              //msg 'heal' 33
+              @usetype! 0xf0c
+              settimer 'heal potion' 0
+              pause 600
+            endif
+          endif
+          if diffhits >= 50 and yellowhits 'self'
+            if timer 'enchanted apple' >= 121250
+              //msg 'apple' 33
+              @usetype! 0x2fd8
+              @settimer 'enchanted apple' 0
+              pause 600
+            endif
+          endif
+          // Refresh potion
+          if stam <= 100
+            //msg 'refresh' 33
+            @usetype 0xf0b
+            pause 1000
+          endif
+          if @inrange 'enemy' 10
+            if timer 'str pot' >= 121250
+              @usetype! 0xf09 0
+              @settimer 'str pot' 0
+              pause 600
+            endif
+            if timer 'agi pot' >= 122350
+              @usetype! 0xf08 0
+              @settimer 'agi pot' 0
+              pause 600
+            endif
+          endif
+        endif
+      endif
+    endif
+  endif
+endwhile
