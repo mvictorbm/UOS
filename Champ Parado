@@ -1,14 +1,15 @@
-///////////////////////////////////////////////////////////////////////////
-///////////////////////////// SETUP ///////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+//Setup
 //Timers
 if not timerexists 'evasion'
+  @createtimer 'evasion'
   @settimer 'evasion' 22000
 endif
 if not timerexists 'nocast'
+  @createtimer 'nocast'
   @settimer 'nocast' 2000
 endif
 if not timerexists 'lure'
+  @createtimer 'lure'
   @settimer 'lure' 10000
 endif
 //Logout if dead
@@ -32,9 +33,7 @@ if not listexists 'replicas'
 endif
 @setalias 'mount' 0x3ef74
 sysmsg "# BOT Champ by Grifo (Llama's Mod) #" 15
-///////////////////////////////////////////////////////////////////////////
-////////////////////// END OF SETUP ///////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
+//End of setup
 //Main loop
 while not dead 'self'
   @setability 'primary' 'on'
@@ -77,32 +76,35 @@ while not dead 'self'
   //Check replicas
   for 0 to 'replicas'
     canceltarget
-    while @findtype 'replicas[]' 'any' 'backpack'
-      if @color 'found' != 0
-        waitforproperties 'found' 1500
-        if @property 'replica' 'found'
-          if not @property 'insured' 'found' and not @property 'blessed' 'found'
-            waitforcontext 'self' 3 1500
-            waitfortarget 1500
-            if @target! 'found'
-              waitforproperties 'found' 1500
-            endif
+    while @findtype replicas[] 'any' 'backpack'
+      waitforproperties 'found' 1500
+      if @property 'replica' 'found'
+        if not @property 'insured' 'found' and not @property 'blessed' 'found'
+          waitforcontext 'self' 3 1500
+          waitfortarget 1500
+          if @targetexists 'any'
+            target! 'found'
+            sysmsg '** REPLICA INSURED **' 33
+            pause 1000
           endif
+        else
+          ignoreobject! 'found'
         endif
+      else
+        ignoreobject! 'found'
       endif
-      ignoreobject! 'found'
     endwhile
   endfor
   //Lure mobs
-  if not @inrange 'enemy' 1 and @timer 'lure' > 5000
+  if not @inrange 'enemy' 1 and @timer 'lure' > 2000
     for 20
-      getenemy 'criminal' 'enemy' 'murderer' 'gray' 'next'
+      @getenemy 'criminal' 'enemy' 'murderer' 'gray' 'next'
       attack 'enemy'
     endfor
     settimer 'lure' 0
   endif
   //Get enemy
-  @getenemy 'criminal' 'enemy' 'murderer' 'gray' 'closest'
+  @getenemy 'criminal' 'enemy' 'murderer' 'gray''closest'
   @setability 'primary' 'on'
   if @graphic 'enemy' == 0x33 or @graphic 'enemy' == 0xa4
     @unsetalias 'enemy'
@@ -110,26 +112,27 @@ while not dead 'self'
     attack 'enemy'
   endif
   //Cast spells
-  if timer 'nocast' > 2000 and @inrange 'enemy' 10
-    if not buffexists 'Consecrate Weapon' and mana 'self' >= 15
+  if timer 'nocast' > 1500 and @inrange 'enemy' 10
+    if diffhits > 10 and counttype 0xf8a 0 'backpack' > 1
+      if not buffexists 'curse weapon' and
+        cast 'curse Weapon'
+        @settimer 'nocast' 0
+      endif
+    elseif not buffexists 'Consecrate Weapon' and mana 'self' >= 15
       @cast 'consecrate weapon'
       @settimer 'nocast' 0
-    elseif diffhits > 30
-      if not buffexists 'curse weapon' and counttype 0xf8a 0 'backpack' > 1
-        cast 'curse Weapon'
-        @settimer 'nocast' 1500
-      endif
     elseif not @buffexists 'confidence' and hits < 100
       cast 'confidence'
       @settimer 'nocast' 0
     elseif not buffexists 'Counter Attack' and mana >= 10
       cast 'Counter Attack'
-      @settimer 'nocast' 1500
+      @settimer 'nocast' 1000
     elseif not @buffexists 'evasion' and @timer 'evasion' > 23000
       cast 'evasion'
+      @settimer 'evasion' 0
       @settimer 'nocast' 0
     endif
-    if hits > 80 and stam < 150
+    if hits > 80 and stam < 120
       if mana 'self' >= 12
         @cast "Divine Fury"
         @settimer 'nocast' 0
@@ -139,9 +142,9 @@ while not dead 'self'
   @getenemy 'criminal' 'enemy' 'murderer' 'gray' 'closest'
   if not @inrange 'enemy' 7
     if diffhits > 20 or @poisoned 'self'
-      chivalryheal 'self'
-      while waitingfortarget
-      endwhile
+      //chivalryheal 'self'
+      //while waitingfortarget
+      //endwhile
     endif
   endif
 endwhile
