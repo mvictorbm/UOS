@@ -1,0 +1,33 @@
+//Replicas
+if not listexists 'replicas'
+  createlist 'replicas'
+  @pushlist! 'replicas' 0x1413
+  @pushlist! 'replicas' 0x1540
+  @pushlist! 'replicas' 0x1541
+  @pushlist! 'replicas' 0x1f03
+  @pushlist! 'replicas' 0x2684
+  @pushlist! 'replicas' 0x170b
+  @pushlist! 'replicas' 0x1f0b
+endif
+//Check replicas
+for 0 to 'replicas'
+  canceltarget
+  while @findtype replicas[] 'any' 'backpack'
+    if @color 'found' != 0
+      waitforproperties 'found' 1500
+      if @property "conjurer's" 'found'
+        if not @property 'insured' 'found' and not @property 'blessed' 'found'
+          waitforcontext 'self' 3 1500
+          waitfortarget 1500
+          if @target! 'found'
+            waitforproperties 'found' 1500
+            sysmsg '** CONJURER INSURED **' 33
+            pause 1000
+          endif
+        else
+          ignoreobject! 'found'
+        endif
+      endif
+    endif
+  endwhile
+endfor
