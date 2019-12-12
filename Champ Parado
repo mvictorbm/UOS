@@ -121,6 +121,9 @@ while not dead 'self'
     elseif not buffexists 'Consecrate Weapon' and mana 'self' >= 15
       @cast 'consecrate weapon'
       @settimer 'nocast' 0
+    elseif stam < 120
+      cast "Divine Fury"
+      @settimer 'nocast' 500
     elseif not @buffexists 'confidence' and hits < 100
       cast 'confidence'
       @settimer 'nocast' 0
@@ -132,7 +135,7 @@ while not dead 'self'
       @settimer 'evasion' 0
       @settimer 'nocast' 0
     endif
-    if hits > 80 and stam < 120
+    if hits > 80 and stam < 135
       if mana 'self' >= 12
         @cast "Divine Fury"
         @settimer 'nocast' 0
