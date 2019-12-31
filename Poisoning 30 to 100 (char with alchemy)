@@ -75,7 +75,14 @@ while @findtype 0xf0a 0 'backpack'
     settimer 'delay' 0
   endif
   if @poisoned 'self'
-    usetype 0xf07 0
-    pause 550
+    if skill 'magery' >= 50
+      cast 'arch cure' 'self'
+      pause 2000
+    elseif skill 'chivalry' >= 50
+      cast 'cleanse by fire' 'self'
+      pause 2000
+    elseif usetype 0xf07 0
+      pause 550
+    endif
   endif
 endwhile
