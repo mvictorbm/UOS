@@ -7,7 +7,7 @@ rail = [[5180, 708], [5180, 714], [5179, 719], [5179, 722], [5182, 725], [5180, 
 
 while not Dead():
 	for xy in rail:
-		newMoveXY(xy[0], xy[1])
+		newMoveXY(xy[0], xy[1], True, 1 True)
 		SetFindDistance(3)
 		GetFindDistance()
 		SetFindVertical(2)
