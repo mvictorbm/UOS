@@ -46,6 +46,9 @@ else:
                         creatures.sort(reverse=True, key=GetDistance)
                         if len(creatures) > 0:
                             mob = creatures[0]
+                        else:
+                            hasMob = False
+                            break
 
                 while mob != None and IsObjectExists(mob) and IsDead(mob) == False:
                     print('=> Mob', GetTooltip(mob), GetX(mob), GetY(mob))
