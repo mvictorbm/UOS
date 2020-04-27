@@ -6,7 +6,6 @@ rail = [[5253, 874], [5241, 851], [5225, 839], [5226, 827], [5226, 813], [5253, 
 
 if Dead():
     Disconnect()
-
 else:
     while not Dead():
         IgnoreReset()
@@ -45,9 +44,10 @@ else:
                             if GetType(i) in [0x190,0x191,0x25d,0x25e]:
                                 creatures.remove(i)
                         creatures.sort(reverse=True, key=GetDistance)
-                        mob = creatures[0]
+                        if len(creatures) > 0:
+                            mob = creatures[0]
 
-                while mob != None and IsObjectExists(mob) and !IsDead(mob):
+                while mob != None and IsObjectExists(mob) and IsDead(mob) == False:
                     print('=> Mob', GetTooltip(mob), GetX(mob), GetY(mob))
                     newMoveXY(GetX(mob), GetY(mob), True, 1, True)
                     Wait(100)
