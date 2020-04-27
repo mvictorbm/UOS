@@ -5,49 +5,49 @@ boss_type = [0x00ac]
 rail = [[5253, 874], [5241, 851], [5225, 839], [5226, 827], [5226, 813], [5253, 819], [5250, 805], [5256, 830], [5250, 805], [5267, 799], [5288, 805], [5299, 815], [5303, 822], [5309, 837], [5300, 846], [5288, 847], [5272, 847], [5261, 855], [5255, 865]]
 
 if Dead():
-	Disconnect()
+    Disconnect()
 
 else:
-	while not Dead():
-		IgnoreReset()
-		Ignore(Self())
-	    for xy in rail:
-	        if Dead():
-	        	break
-	        newMoveXY(xy[0], xy[1], True, 1, True)
-	        print('=> Rail', xy[0], xy[1])
-	        mob = None
-	        SetFindDistance(3)
-	        SetFindVertical(100)
-	        t_chase = datetime.now() + timedelta(minutes=1)
-	        hasMob = True
-	        creatures = []
-	        while (not Dead() and hasMob and datetime.now() < t_chase):
-	            #boss
-	            if FindTypesArrayEx(boss_type, [0xFFFF], [Ground()], False) > 0: 
-	                mob = FindItem()
-	                t_chase = datetime.now() + timedelta(minutes=10)
-	            #creatures
-	            else:
-	                if FindNotoriety(-1, 3):
-	                    creatures += GetFindedList()
-	                if FindNotoriety(-1, 4):
-	                    creatures += GetFindedList() 
-	                if FindNotoriety(-1, 1):
-	                    creatures += GetFindedList()
+    while not Dead():
+        IgnoreReset()
+        Ignore(Self())
+        for xy in rail:
+            if Dead():
+                break
+            newMoveXY(xy[0], xy[1], True, 1, True)
+            print('=> Rail', xy[0], xy[1])
+            mob = None
+            SetFindDistance(3)
+            SetFindVertical(100)
+            t_chase = datetime.now() + timedelta(minutes=1)
+            hasMob = True
+            creatures = []
+            while (not Dead() and hasMob and datetime.now() < t_chase):
+                #boss
+                if FindTypesArrayEx(boss_type, [0xFFFF], [Ground()], False) > 0: 
+                    mob = FindItem()
+                    t_chase = datetime.now() + timedelta(minutes=10)
+                #creatures
+                else:
+                    if FindNotoriety(-1, 3):
+                        creatures += GetFindedList()
+                    if FindNotoriety(-1, 4):
+                        creatures += GetFindedList() 
+                    if FindNotoriety(-1, 1):
+                        creatures += GetFindedList()
 
-	                if len(creatures) == 0: 
-	                    hasMob = False 
-	                    break
-	                else:
-	                	#Remover players inocentes
-	                	for i in creatures:
-	                		if GetType(i) in [0x190,0x191,0x25d,0x25e]:
-	                			creatures.remove(i)
-	                    creatures.sort(reverse=True, key=GetDistance)
-			            mob = creatures[0]
+                    if len(creatures) == 0: 
+                        hasMob = False 
+                        break
+                    else:
+                        #Remover players inocentes
+                        for i in creatures:
+                            if GetType(i) in [0x190,0x191,0x25d,0x25e]:
+                                creatures.remove(i)
+                        creatures.sort(reverse=True, key=GetDistance)
+                        mob = creatures[0]
 
-	            while mob != None and IsObjectExists(mob) and !IsDead(mob):
-	                print('=> Mob', GetTooltip(mob), GetX(mob), GetY(mob))
-	                newMoveXY(GetX(mob), GetY(mob), True, 1, True)
-	                Wait(100)
+                while mob != None and IsObjectExists(mob) and !IsDead(mob):
+                    print('=> Mob', GetTooltip(mob), GetX(mob), GetY(mob))
+                    newMoveXY(GetX(mob), GetY(mob), True, 1, True)
+                    Wait(100)
