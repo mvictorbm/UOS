@@ -15,6 +15,7 @@ else:
                 break
             newMoveXY(xy[0], xy[1], True, 1, True)
             print('=> Rail', xy[0], xy[1])
+            Wait(3000)
             mob = None
             SetFindDistance(3)
             SetFindVertical(100)
