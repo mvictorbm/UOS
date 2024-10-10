@@ -1,0 +1,536 @@
+"""
+Doom puzzle solver
+Author: Llama Vortex
+Date: 16/12/2023
+WARNING!! enable Show Cliloc text in journal on Stealth Configuration
+
+v2_4:
+Checks if all levers are in the resting position before starting a sequence
+
+v2_3:
+Monitor levers by sound (Previous monitor used changing types, but the last lever does not change after being pulled)
+
+
+Next steps: 
+1) heal self and puzzle helpers
+2) stealing the inq routine
+3) monitor the inq spawn 
+4) use sampire to survive
+5) ress routine
+6) transform debug messages in overhead messages
+7) automatically start a new sequence after everyone is full health
+8) use other methods for healing self
+
+"""
+
+from datetime import datetime, timedelta
+from py_stealth import *  
+import py_stealth as stealth
+
+
+WAIT_TIME = 500  # Default Wait Time
+WAIT_LAG_TIME = 10000  # Default Wait Lag Time
+STUCK_TIME = 10000  # Default Stuck Time
+WORLD_SAVE_AVG_TIME = 10000
+N_LEVER_COORD = (323, 58)
+S_LEVER_COORD = (323, 71)
+E_LEVER_COORD = (332, 63)
+W_LEVER_COORD = (316, 64)
+#N_LEVER_ID = 0x4026F6ED
+#S_LEVER_ID = 0x4026F6EF
+#E_LEVER_ID = 0x4026F6EE
+#W_LEVER_ID = 0x4026F6EC
+N_LEVER_ID = 1076295405
+S_LEVER_ID = 1076295407
+E_LEVER_ID = 1076295406
+W_LEVER_ID = 1076295404
+PUZZLE_CENTER_ID = 0x4026F6EB
+INQ_PEDESTAL_ID = 0x40140160
+T_TILE_COORD = (324, 64)
+N_TILE_COORD = (324, 58)
+S_TILE_COORD = (323, 72)
+E_TILE_COORD = (332, 64)
+W_TILE_COORD = (316, 65)
+LEVER_TYPES = [0x108E, 0x108C]
+ALL_SEQUENCE = [
+    ["n", "s", "e", "w"], #0
+    ["n", "s", "w", "e"], #1
+    ["n", "e", "s", "w"], #2
+    ["n", "e", "w", "s"], #3
+    ["n", "w", "s", "e"], #4
+    ["n", "w", "e", "s"], #5
+    ["s", "n", "e", "w"], #6
+    ["s", "n", "w", "e"], #7
+    ["s", "e", "n", "w"], #8
+    ["s", "e", "w", "n"], #9
+    ["s", "w", "n", "e"], #10
+    ["s", "w", "e", "n"], #11
+    ["e", "n", "s", "w"], #12
+    ["e", "n", "w", "s"], #13
+    ["e", "s", "n", "w"], #14
+    ["e", "s", "w", "n"], #15
+    ["e", "w", "n", "s"], #16
+    ["e", "w", "s", "n"], #17
+    ["w", "n", "s", "e"], #18
+    ["w", "n", "e", "s"], #19
+    ["w", "s", "n", "e"], #20
+    ["w", "s", "e", "n"], #21
+    ["w", "e", "n", "s"], #22
+    ["w", "e", "s", "n"]  #23
+]
+CURR_SEQ_ID = 0
+ALL_TRIED_SEQ = []
+NEXT_SEQ_LIST = [0]
+LAST_TRIED_SEQ_ID = None
+ALL_PULLED_LEVER = []
+LAST_PULLED_LEVER = ''
+PUZZLE_LOGIC = {
+    '0': [[7], [12], [14]],
+    '7': [[17], ['error'], [13]],
+    '17': [[22], ['error'], [16, 23]],
+    '13': [[10], [9, 10], ['error']],
+    '12': [[3, 11, 20], [4, 8, 15, 19], ['error']],
+    '14': [[5], [2], ['error']],
+    '2': [[21], [1, 6], ['error']]
+}
+
+#def lever_monitor_thread_sound(sound_id, x, y, z):
+#    print(sound_id, x, y, z)
+#    print("-")
+
+
+#This is the previous method of monitoring levers, does not work for the last lever of the sequence
+def lever_monitor_thread(object_id):
+    global ALL_PULLED_LEVER
+    global LAST_PULLED_LEVER
+
+    lever_type = GetType(object_id)
+    if len(ALL_PULLED_LEVER) > 100:
+        ALL_PULLED_LEVER.clear()
+
+    if lever_type == 4236:
+        if object_id == W_LEVER_ID:
+            AddToSystemJournal('Lever monitor: West')
+            LAST_PULLED_LEVER = 'w'
+            ALL_PULLED_LEVER.append('w')
+        elif object_id == N_LEVER_ID:
+            AddToSystemJournal('Lever monitor: North')
+            LAST_PULLED_LEVER = 'n'
+            ALL_PULLED_LEVER.append('n')
+        elif object_id == E_LEVER_ID:
+            AddToSystemJournal('Lever monitor: East')
+            LAST_PULLED_LEVER = 'e'
+            ALL_PULLED_LEVER.append('e')
+        elif object_id == S_LEVER_ID:
+            AddToSystemJournal('Lever monitor: South')
+            LAST_PULLED_LEVER = 's'
+            ALL_PULLED_LEVER.append('s')
+    #Need to remove to be able to test alone.
+    elif lever_type == 4238:
+        #Lever returned to its original position. Either the time has runned out, or someone pulled the same lever twice.
+        ALL_PULLED_LEVER.append('error')
+
+def lever_monitor_thread_sound(sound_id, x, y, z):
+    global ALL_PULLED_LEVER
+    global LAST_PULLED_LEVER
+
+    if len(ALL_PULLED_LEVER) >= 4:
+        return
+    
+    #Lever being pulled sound
+    if sound_id == 1000:
+        if (x,y) == W_LEVER_COORD: 
+            AddToSystemJournal('Lever monitor: West')
+            LAST_PULLED_LEVER = 'w'
+            ALL_PULLED_LEVER.append('w')
+        elif (x,y) == N_LEVER_COORD:
+            AddToSystemJournal('Lever monitor: North')
+            LAST_PULLED_LEVER = 'n'
+            ALL_PULLED_LEVER.append('n')
+        elif (x,y) == E_LEVER_COORD:
+            AddToSystemJournal('Lever monitor: East')
+            LAST_PULLED_LEVER = 'e'
+            ALL_PULLED_LEVER.append('e')
+        elif (x,y) == S_LEVER_COORD:
+            AddToSystemJournal('Lever monitor: South')
+            LAST_PULLED_LEVER = 's'
+            ALL_PULLED_LEVER.append('s')
+    #Need to remove to be able to test alone.
+    elif lever_type == 4238:
+        #Lever returned to its original position. Either the time has runned out, or someone pulled the same lever twice.
+        ALL_PULLED_LEVER.append('error')
+
+#SetEventProc('evItemInfo', Callback=lever_monitor_thread)
+SetEventProc('evSound', Callback=lever_monitor_thread_sound)
+
+def death_handler():
+    #Dead in puzzle
+    #Dead in inqs room
+    pass
+
+def survive_handler():
+    pass
+
+def steal_inquis():
+    pass
+
+def check_region():
+    if GetDistance(PUZZLE_CENTER_ID) >= 0 and GetDistance(PUZZLE_CENTER_ID) < 20:
+        return "puzzle"
+    if GetDistance(INQ_PEDESTAL_ID) >= 0 and GetDistance(INQ_PEDESTAL_ID) < 10:
+        return "room"
+    else:
+        ClientPrintEx(Self(), 25, 1, "Not in a valid region")
+        return None 
+
+def get_self_role():
+    if GetX(Self()) == N_TILE_COORD[0] and GetY(Self()) == N_TILE_COORD[1]:
+        #AddToSystemJournal('North player')
+        return "n"
+    elif GetX(Self()) == T_TILE_COORD[0] and GetY(Self()) == T_TILE_COORD[1]:
+        #AddToSystemJournal('Thief player')
+        return "t"
+    elif GetX(Self()) == E_TILE_COORD[0] and GetY(Self()) == E_TILE_COORD[1]:
+        #AddToSystemJournal('East player')
+        return "e"
+    elif GetX(Self()) == S_TILE_COORD[0] and GetY(Self()) == S_TILE_COORD[1]:
+        #AddToSystemJournal('South player')
+        return "s"
+    elif GetX(Self()) == W_TILE_COORD[0] and GetY(Self()) == W_TILE_COORD[1]:
+        #AddToSystemJournal('West player')
+        return "w"
+    else:
+        ClientPrintEx(Self(), 25, 1, "Not in a valid tile")
+        return None
+
+def pull_lever(role):
+    SetFindDistance(2)
+    SetFindVertical(20)
+    FindTypesArrayEx(LEVER_TYPES, [0xFFFF], [Ground()], False)
+    lever = FindItem()
+    #AddToSystemJournal('debug: lever found '+str(lever))
+    if lever != 0:
+        my_lever = FindItem()
+        if InJournal("#"+role) > -1:
+            ClearJournal()
+            UseObject(lever)
+            AddToSystemJournal('Pulling the lever: ' + role)
+            Wait(600)
+            return True
+    else:
+        AddToSystemJournal('Could not find the lever')
+        return False
+
+def count_hits():
+    if InJournal("the circle of souls has failed") > -1:
+        return 0
+    elif InJournal("soul has turned") > -1:
+        return 1
+    elif InJournal("souls have turned") > -1:
+        return 2
+    elif InJournal("sands of time") > -1:
+        return -1
+    elif InJournal("the circle is the key") > -1:
+        return -1
+    else:
+        return None
+
+def execute_seq(seq_id = 0, timeout = 10000):
+    limit_time = datetime.now() + timedelta(seconds=timeout/1000)
+    global ALL_PULLED_LEVER
+    global LAST_PULLED_LEVER
+    wait_counter = 0
+    ALL_PULLED_LEVER.clear()
+    LAST_PULLED_LEVER = ''
+    SetFindDistance(20)
+    SetFindVertical(20)
+
+    #Checking if all levers are in resting position before starting to say the sequence
+    while not (GetType(N_LEVER_ID) == GetType(S_LEVER_ID) == GetType(E_LEVER_ID) == GetType(W_LEVER_ID) == 4238):
+        print('Not all Levers are in resting position. Waiting 5s')
+        #Not sure if += makes the correct operation
+        limit_time = limit_time + timedelta(seconds=5)
+        Wait(5000)
+        wait_counter += 1
+        if wait_counter > 5:
+            wait_counter = 0
+            print('Limit waiting has been reached. Sequence not executed')
+            return
+    ClearJournal()
+    AddToSystemJournal('Trying sequence: #' + str(seq_id))
+    for i in ALL_SEQUENCE[seq_id]:
+        UOSay('#'+i)
+        Wait(1000)
+        while(True):
+            Wait(50)
+            heal_self()
+            #AddToSystemJournal('Last pulled lever:' + LAST_PULLED_LEVER)
+            pulled_lever = LAST_PULLED_LEVER
+            if pulled_lever == '':
+                Wait(50)
+            if pulled_lever == i:
+                AddToSystemJournal('Right lever was pulled: ' + pulled_lever)
+                LAST_PULLED_LEVER = ''
+                break
+            elif pulled_lever != '' and pulled_lever != i:
+                AddToSystemJournal('The wrong lever was pulled. Terminating')
+                AddToSystemJournal('Lever expected: ' + i)
+                AddToSystemJournal('Lever pulled: ' + pulled_lever)
+                LAST_PULLED_LEVER = ''
+                return -1
+            elif datetime.now() > limit_time:
+                AddToSystemJournal('Timeout was reached for executing the sequence')
+                LAST_PULLED_LEVER = ''
+                return -1
+    AddToSystemJournal('Last 4 levers pulled:' + str(ALL_PULLED_LEVER[-4:]))
+    AddToSystemJournal('Sequence:' + str(ALL_SEQUENCE[seq_id]))    
+    if ALL_PULLED_LEVER[-4:] == ALL_SEQUENCE[seq_id]:
+        AddToSystemJournal('Sequence was correctly executed: #' + str(seq_id))
+        #Next steps: use this time to heal self and puzzle participantes
+        AddToSystemJournal('Waiting 10s')
+        Wait(5000)
+        hits = count_hits()
+        Wait(5000)
+        print('Pulled this many levers correctly: ' + hits)
+        return hits
+    else:
+        #Next steps: use this time to heal self and puzzle participantes
+        AddToSystemJournal('Sequence failed. Repeat: #' + str(seq_id))
+        AddToSystemJournal('Waiting 10s')
+        Wait(10000)
+        return -1
+
+def is_buff_active(spell, timer_start=datetime.now()):
+    bufficon = BuffIcons.get(spell)
+    info = GetBuffBarInfo()
+    for icon in info:
+        if(icon.get("Attribute_ID") == bufficon):
+            if(bufficon == 1011):
+                enemy_of_one_start = icon.get("TimeStart")
+                if (enemy_of_one_start < timer_start):
+                    return False
+                else:
+                    return True
+            else:
+                return True
+    return False
+
+def heal_self():
+    if Poisoned():
+        if GetSkillValue('Magery') >= 50:
+            Cast('Cure')
+            WaitTargetSelf()
+            Wait(1000)
+        elif GetSkillValue('Chivalry') >= 50:
+            Cast('Cleanse by Fire')
+            WaitTargetSelf()
+            Wait(2000)
+
+    elif GetMaxHP(Self()) > GetHP(Self()):
+        if GetSkillValue('Magery') >= 50:
+            Cast('Greater Heal')
+            WaitTargetSelf()
+            Wait(2000)
+        elif GetSkillValue('Chivalry') >= 50:
+            Cast('Close Wounds')
+            WaitTargetSelf()
+            Wait(2000)
+
+
+while(True):
+    myrole = get_self_role()
+    region = check_region()
+
+    if region == 'room':
+        steal_inquis()
+    elif region == None:
+        AddToSystemJournal('You are not in a valid region')
+        Wait(5000)
+    elif region == 'puzzle':
+        if myrole == 't':
+            i = 0
+            while i < len(NEXT_SEQ_LIST):
+                heal_self()
+                #Breaking conditions
+                if check_region() == 'room':
+                    steal_inquis()
+                    break
+                
+                if Dead():
+                    death_handler()
+                    break
+
+                elif check_region() == 'puzzle':
+                    #Executing the sequence
+                    right_levers = execute_seq(NEXT_SEQ_LIST[i], 30000)
+                    if right_levers == None:
+                        AddToSystemJournal('Problem counting the number of correct levers')
+                        AddToSystemJournal('Repeating the sequence')
+                        break
+                    #Check if a sequence was correctly executed
+                    elif right_levers >= 0:
+                        CURR_SEQ_ID = NEXT_SEQ_LIST[i]
+                        LAST_TRIED_SEQ_ID = NEXT_SEQ_LIST[i]
+                        ALL_TRIED_SEQ.append(NEXT_SEQ_LIST[i])
+                        #A decision point only occurs when the NEXT_SEQ_LIST is composed by only one object
+                        if len(NEXT_SEQ_LIST) == 1:
+                            #For instance, if the sequence #13 was tried, and 1 lever was pulled correctly (count_hits == 1), then the next list of sequences to be tried can be found by getting the 2nd element (n = 1) correponding to the currently tried sequence on the dictionnaire "PUZZLE_LOGIC", in this case, [9, 10]
+                            check_decision = PUZZLE_LOGIC[str(LAST_TRIED_SEQ_ID)][right_levers]
+                            
+                            if check_decision != ['error']: 
+                                NEXT_SEQ_LIST = check_decision
+                                break
+                            #Something went wrong. This number of right levers shoudn't exist at this point of the script. Need to reestart    
+                            else:
+                                AddToSystemJournal('LOGIC ERROR. Repeating the whole proccess!!!')
+                                AddToSystemJournal('Found ' + str(right_levers) + ' levers correct to the combination #' + str(CURR_SEQ_ID))
+                                CURR_SEQ_ID = 0
+                                ALL_TRIED_SEQ = []
+                                LAST_TRIED_SEQ_ID = None
+                                NEXT_SEQ_LIST = [0]
+                                break
+                        #Then its not a decision point. Just keep executing the next sequence in the list.
+                        else:
+                            i+=1
+                    Wait(10)
+        elif myrole == None: 
+            AddToSystemJournal("You don't have a role. Go do something")
+            AddToSystemJournal("Waiting 5s")
+            heal_self()
+            Wait(5000)
+        else:
+            pull_lever(myrole)
+            heal_self()
+            Wait(10)
+
+        Wait(10)
+
+
+
+"""
+#======Inq stealing routine (to be implemented) =====
+def guildmsg(message, message_color=66):
+    UOSay("\ %s" % (message))
+
+def property_present(property, objid):
+    timeout = datetime.now() + timedelta(seconds=2)
+    while GetTooltip(objid).lower() == '':
+        Wait(50)
+        if datetime.now() > timeout:
+            AddToSystemJournal('timeout...')
+            return 0
+    item_details_str = GetTooltip(objid).lower()
+    item_details_array = item_details_str.split("|")
+    for detail in item_details_array:
+        if detail.startswith(property):
+            return True
+    return False
+
+def is_insured(item):
+    tooltip = GetTooltip(item)
+    if tooltip == "":
+        # VAZIO. CLICAR NO ITEM UMA VEZ E AGUARDAR UM TEMPINHO
+        ClickOnObject(item)
+        Wait(300)
+        tooltip = GetTooltip(item)
+    tooltip_str = str(tooltip).lower()
+    if tooltip_str.find("insured") > 0:
+        return True
+    else:
+        return False
+
+    
+def is_blessed(item):
+    tooltip = GetTooltip(item)
+    if tooltip == "":
+        # VAZIO. CLICAR NO ITEM UMA VEZ E AGUARDAR UM TEMPINHO
+        ClickOnObject(item)
+        Wait(300)
+        tooltip = GetTooltip(item)
+    tooltip_str = str(tooltip).lower()
+    if tooltip_str.find("blessed") > 0:
+        return True
+    else:
+        return False
+
+def insure_item(item):
+    if is_insured(item) or is_blessed(item):
+        #AddToSystemJournal("Item already Insured or blessed")
+        return False
+    RequestContextMenu(char)
+    SetContextMenuHook(char, 3)
+    WaitForTarget(2000)
+    if TargetPresent():
+        WaitTargetObject(item)
+        Wait(1000)
+        reset_context_menu()
+        if TargetPresent():
+            CancelTarget()
+        return item
+
+def clear_hands():
+    if ObjAtLayer(RhandLayer()) > 0:
+        Unequip(RhandLayer())
+        Wait(1000)
+
+    if ObjAtLayer(LhandLayer()) > 0:
+        Unequip(LhandLayer())
+        Wait(1000)     
+
+def steal_inquis():
+    SetFindDistance(20)
+    SetFindVertical(20)
+    if FindTypeEx(0x1414,  1266,  Ground()):
+        inq_found = True
+        inq_id = FindItem()
+        while not FindTypeEx(0x1414,  1266,  Backpack()):
+            while not GetDistance(inq_id) < 2:
+                    newMoveXY(GetX(inq_id), GetY(inq_id), True, 8, True)
+                    Wait(50)
+
+            clear_hands()    
+            UseSkill('Stealing')
+            Wait(500)
+            if TargetPresent:
+                TargetToObject(inq_id) 
+                Wait(600)
+
+        #Check if inquis is insured
+        for i in range(4):
+            if not is_insured(inq_id):
+                insure_item(inq_id)
+                Wait(1000)
+    return
+""" 
+
+"""       
+def get_all_lever_id():
+    SetFindDistance(20)
+    SetFindVertical(20)
+    n_lever_id = FindAtCoord(N_LEVER_COORD[0], N_LEVER_COORD[1])
+    if FindItem() > 0:
+        AddToSystemJournal('North lever found')
+    else:
+        AddToSystemJournal('Coult not find the North Lever')
+        return None
+    s_lever_id = FindAtCoord(N_LEVER_COORD[0], N_LEVER_COORD[1])
+    if FindItem() > 0:
+        AddToSystemJournal('South lever found')
+    else:
+        AddToSystemJournal('Coult not find the South Lever')
+        return None
+    e_lever_id = FindAtCoord(N_LEVER_COORD[0], N_LEVER_COORD[1])
+    if FindItem() > 0:
+        AddToSystemJournal('East lever found')
+    else:
+        AddToSystemJournal('Coult not find the East Lever')
+        return None
+    w_lever_id = FindAtCoord(N_LEVER_COORD[0], N_LEVER_COORD[1])
+    if FindItem() > 0:
+        AddToSystemJournal('West lever found')
+    else:
+        AddToSystemJournal('Coult not find the West Lever')
+        return None
+    lever_ids = [n_lever_id, s_lever_id, e_lever_id, w_lever_id]
+    return lever_ids
+"""
